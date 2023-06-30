@@ -3,7 +3,7 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import {HttpErrors, debugFactory} from '@collabland/common';
+import { HttpErrors, debugFactory } from '@collabland/common';
 import {
   APIInteractionResponse,
   ApplicationCommandSpec,
@@ -16,9 +16,9 @@ import {
   InteractionResponseType,
   InteractionType,
 } from '@collabland/discord';
-import {MiniAppManifest} from '@collabland/models';
-import {BindingScope, injectable} from '@loopback/core';
-import {api, get, param} from '@loopback/rest';
+import { MiniAppManifest } from '@collabland/models';
+import { BindingScope, injectable } from '@loopback/core';
+import { api, get, param } from '@loopback/rest';
 import {
   APIInteraction,
   ActionRowBuilder,
@@ -33,7 +33,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from 'discord.js';
-import {Pollsapi} from './polls-api';
+import { Pollsapi } from './polls-api';
 const debug = debugFactory('collabland:poll-action');
 /**
  * CollabActionController is a LoopBack REST API controller that exposes endpoints
@@ -42,7 +42,7 @@ const debug = debugFactory('collabland:poll-action');
 @injectable({
   scope: BindingScope.SINGLETON,
 })
-@api({basePath: '/poll-action'}) // Set the base path to `/poll-action`
+@api({ basePath: '/poll-action' }) // Set the base path to `/poll-action`
 export class PollActionController extends BaseDiscordActionController {
   private interactions: {
     request: DiscordActionRequest<APIInteraction>;
@@ -86,7 +86,7 @@ export class PollActionController extends BaseDiscordActionController {
         name: 'PollAction',
         platforms: ['discord'],
         shortName: 'poll-action',
-        version: {name: '0.0.1'},
+        version: { name: '0.0.1' },
         website: 'https://collab.land',
         description:
           'An example Collab action to illustrate various Discord UI elements',
@@ -105,11 +105,14 @@ export class PollActionController extends BaseDiscordActionController {
     return metadata;
   }
 
+  // ========================================== ^TEMPLATE^ ========================================
+
   /**
    * Handle the Discord interaction
    * @param interaction - Discord interaction with Collab.Land action context
    * @returns - Discord interaction response
    */
+
   protected async handle(
     interaction: DiscordActionRequest<APIInteraction>,
   ): Promise<DiscordActionResponse | undefined> {
@@ -118,10 +121,12 @@ export class PollActionController extends BaseDiscordActionController {
       interaction.type === InteractionType.ApplicationCommand &&
       interaction.data.name === 'poll'
     ) {
+      // creates the pop up (Modal) when user inputs slash command
       const data = new ModalBuilder()
         .setTitle('Create a poll')
         .setCustomId('poll:modal:modal')
         .addComponents(
+          // creates the text box for user input 
           new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
             new TextInputBuilder()
               .setCustomId('poll:text:description')
@@ -138,14 +143,17 @@ export class PollActionController extends BaseDiscordActionController {
           ),
         )
         .toJSON();
+      // returns 
       return {
         type: InteractionResponseType.Modal,
         data,
       };
     }
     if (interaction.type === InteractionType.ModalSubmit) {
+      //interaction.data.components[] contains the inputted values
       const description = interaction.data.components[0].components[0].value;
       const options = interaction.data.components[1].components[0].value.trim();
+      // choices splits each option by newlin   
       const choices = options.split('\n');
       console.log(choices);
       const poll = await this.pollsApi.createPoll(description, choices);
@@ -155,20 +163,25 @@ export class PollActionController extends BaseDiscordActionController {
           .setCustomId(`poll:${poll.data.id}:${c.id}`)
           .setStyle(ButtonStyle.Secondary);
       });
+      //const joinList = new ButtonBuilder()
+      //  .setLabel('Join')
       const viewResult = new ButtonBuilder()
         .setLabel('View Results')
         .setCustomId(`poll:${poll.data.id}:view-results`)
         .setStyle(ButtonStyle.Primary);
+
+      //returns the textbox for how many votes in each choice
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
           embeds: [
             new EmbedBuilder()
               .setTitle(description)
-              .setFields({name: 'pollID', value: poll.data.id})
+              .setFields({ name: 'pollID', value: poll.data.id })
               .setDescription(options)
               .toJSON(),
           ],
+          // ASK JERRYS DAD   <------ ASK
           components: [
             new ActionRowBuilder<MessageActionRowComponentBuilder>()
               .addComponents(buttons)
@@ -180,12 +193,15 @@ export class PollActionController extends BaseDiscordActionController {
         },
       };
     }
+
+    // ????????
+
     if (interaction.type === InteractionType.MessageComponent) {
       if (interaction.data.component_type === ComponentType.Button) {
         const customId = interaction.data.custom_id;
-        const vote = customId.split(':');
+        const vote = customId.split(':'); //vote id 
         let voteCreated = undefined;
-        if (vote[2] !== 'view-results') {
+        if (vote[2] !== 'view-results') {  //MEANS THERE HAS TO BE 2 OPTIONS (has to be changed to 1 join option)
           const allVotes = await this.pollsApi.getAllVotesOnPoll(
             vote[1],
             0,
@@ -200,13 +216,13 @@ export class PollActionController extends BaseDiscordActionController {
 
           voteCreated = await this.pollsApi.createVote({
             poll_id: vote[1],
-            option_id: vote[2],
+            option_id: vote[2],  //why is there only 1 option id  <------- ASK
             identifier: interaction.member!.user.id,
           });
         }
-        const poll = await this.pollsApi.getPoll(vote[1]);
-        const counts: Record<string, number> = {};
-        poll.options.forEach(p => {
+        const poll = await this.pollsApi.getPoll(vote[1]); // isnt pollid vote[1]? <--------- ASK
+        const counts: Record<string, number> = {}; // wth is a record 
+        poll.options.forEach(p => {   //p is a function, option is the parameter, void is the return 
           counts[p.text] = p.votes_count;
         });
         //const label = choices[index]
@@ -232,7 +248,7 @@ export class PollActionController extends BaseDiscordActionController {
     }
   }
 
-  /**
+  /** 
    * Build a list of supported Discord interactions
    * @returns
    */

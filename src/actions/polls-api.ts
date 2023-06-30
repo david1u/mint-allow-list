@@ -1,5 +1,4 @@
-import {getFetch, handleFetchResponse, stringify} from '@collabland/common';
-import { DataResolver } from 'discord.js';
+import { getFetch, handleFetchResponse, stringify } from '@collabland/common';
 type Vote = {
   identifier: string;
   poll_id: string;
@@ -62,7 +61,7 @@ type ApiResponse = {
 
 export class Pollsapi {
   private fetch = getFetch({
-    headers: {'api-key': 'F8CMMVTGA0MVPVHGFCA2M4HDJNA2'},
+    headers: { 'api-key': 'F8CMMVTGA0MVPVHGFCA2M4HDJNA2' },
   });
 
   async createPoll(question: string, options: string[]) {
@@ -73,7 +72,7 @@ export class Pollsapi {
         body: JSON.stringify({
           question,
           options: options.map(opt => {
-            return {text: opt};
+            return { text: opt };
           }),
         }),
       },
@@ -89,10 +88,10 @@ export class Pollsapi {
         method: 'get',
       },
     );
-    const data = await handleFetchResponse<{data: Poll}>(response);
+    const data = await handleFetchResponse<{ data: Poll }>(response);
     return data.data;
   }
-  async createVote(vote: Pick<Vote, 'poll_id' | 'option_id' | 'identifier'>) {
+  async createVote(vote: Pick<Vote, 'poll_id' | 'option_id' | 'identifier'>) {  // from the vote object, select poll_id, option_id, and identifier
     const url = 'https://api.pollsapi.com/v1/create/vote';
 
     const requestOptions = {
@@ -111,11 +110,11 @@ export class Pollsapi {
     const data = await handleFetchResponse<AllVoteAPIresponse>(response);
     return data;
   }
-  async removeVote(vote_id:string){
+  async removeVote(vote_id: string) {
     const url = 'https://api.pollsapi.com/v1/remove/vote';
     const response = await this.fetch(url, {
       method: 'post',
-      body: JSON.stringify({vote_id})
+      body: JSON.stringify({ vote_id })
     })
     const data = await handleFetchResponse(response);
     return data;
@@ -141,7 +140,7 @@ async function main() {
   console.log('This is your vote', vote);
   const allVotes = await api.getAllVotesOnPoll(pollId);
   console.log(stringify(allVotes));
-  const votes = allVotes.data.docs.map(d => {return {pollId: d.poll_id, id: d.id, identifier: d.identifier}});
+  const votes = allVotes.data.docs.map(d => { return { pollId: d.poll_id, id: d.id, identifier: d.identifier } });
   console.log(stringify(votes));
   const deleteVote = await api.removeVote(vote.data.id)
   console.log(deleteVote);
