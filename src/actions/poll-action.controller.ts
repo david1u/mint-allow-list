@@ -1,5 +1,5 @@
 // Copyright Abridged, Inc. 2023. All Rights Reserved.
-// Node module: @collabland/example-allow-list
+// Node module: @collabland/example-poll-action
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
@@ -34,7 +34,7 @@ import {
   TextInputStyle,
 } from 'discord.js';
 import { Pollsapi } from './polls-api';
-const debug = debugFactory('collabland:allow-list');
+const debug = debugFactory('collabland:poll-action');
 /**
  * CollabActionController is a LoopBack REST API controller that exposes endpoints
  * to support Collab.Land actions for Discord interactions.
@@ -42,7 +42,7 @@ const debug = debugFactory('collabland:allow-list');
 @injectable({
   scope: BindingScope.SINGLETON,
 })
-@api({ basePath: '/allow-list' }) // Set the base path to `/allow-list`
+@api({ basePath: '/poll-action' }) // Set the base path to `/poll-action`
 export class PollActionController extends BaseDiscordActionController {
   private interactions: {
     request: DiscordActionRequest<APIInteraction>;
@@ -81,11 +81,11 @@ export class PollActionController extends BaseDiscordActionController {
        * Miniapp manifest
        */
       manifest: new MiniAppManifest({
-        appId: 'allow-list',
+        appId: 'poll-action',
         developer: 'collab.land',
-        name: 'AllowList',
+        name: 'pollAction',
         platforms: ['discord'],
-        shortName: 'allow-list',
+        shortName: 'poll-action',
         version: { name: '0.0.1' },
         website: 'https://collab.land',
         description:
@@ -123,14 +123,14 @@ export class PollActionController extends BaseDiscordActionController {
     ) {
       // creates the pop up (Modal) when user inputs slash command
       const data = new ModalBuilder()
-        .setTitle('Create a list')
+        .setTitle('Create a poll')
         .setCustomId('poll:modal:modal')
         .addComponents(
           // creates the text box for user input 
           new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
             new TextInputBuilder()
-              .setCustomId('poll:text:listName')
-              .setLabel('List Name')
+              .setCustomId('poll:text:description')
+              .setLabel('Poll Description')
               .setStyle(TextInputStyle.Paragraph)
               .setPlaceholder('Hello'),
           ),
@@ -151,12 +151,12 @@ export class PollActionController extends BaseDiscordActionController {
     }
     if (interaction.type === InteractionType.ModalSubmit) {
       //interaction.data.components[] contains the inputted values
-      const listName = interaction.data.components[0].components[0].value;
+      const description = interaction.data.components[0].components[0].value;
       const options = interaction.data.components[1].components[0].value.trim();
       // choices splits each option by newlin   
       const choices = options.split('\n');
       console.log(choices);
-      const poll = await this.pollsApi.createPoll(listName, choices);
+      const poll = await this.pollsApi.createPoll(description, choices);
       const buttons = poll.data.options.map((c, index) => {
         return new ButtonBuilder()
           .setLabel(c.text)
@@ -176,7 +176,7 @@ export class PollActionController extends BaseDiscordActionController {
         data: {
           embeds: [
             new EmbedBuilder()
-              .setTitle(listName)
+              .setTitle(description)
               .setFields({ name: 'pollID', value: poll.data.id })
               .setDescription(options)
               .toJSON(),
@@ -284,11 +284,11 @@ export class PollActionController extends BaseDiscordActionController {
    */
   private getApplicationCommands(): ApplicationCommandSpec[] {
     const commands: ApplicationCommandSpec[] = [
-      // `/allow-list` slash command
+      // `/poll-action` slash command
       {
         metadata: {
           name: 'PollAction',
-          shortName: 'allow-list',
+          shortName: 'poll-action',
           supportedEnvs: ['poll', 'qa', 'staging'],
         },
         type: ApplicationCommandType.ChatInput,
