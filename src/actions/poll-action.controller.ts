@@ -83,7 +83,7 @@ export class PollActionController extends BaseDiscordActionController {
       manifest: new MiniAppManifest({
         appId: 'poll-action',
         developer: 'collab.land',
-        name: 'pollAction',
+        name: 'PollAction',
         platforms: ['discord'],
         shortName: 'poll-action',
         version: { name: '0.0.1' },
