@@ -9,6 +9,15 @@ type responseAPI = {
     }>;
 };
 
+type entryResponseAPI = {
+    data: {
+        address: string;
+        status: "submitted" | "selected" | "waitlisted" | "not_selected" | "disqualified";
+        tentativeStatus: "selected" | "waitlisted" | "not_selected" | "disqualified";
+        attestationData: Record<string, string | boolean> | null;
+    };
+}
+
 
 export class ListAPI {
     private fetch = getFetch({
@@ -33,7 +42,21 @@ export class ListAPI {
     }
 
     async createOrUpdateEntry(projectID: string, address: string) {
-
+        const response = await this.fetch(
+            `https://api.spearmint.xyz/projects/${projectID}/attestationSchema`
+            ,
+            {
+                method: 'PUT',
+                headers: {
+                    accept: 'application/json',
+                    Authorization: 'Bearer spsk_...',
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({ tentativeStatus: 'selected', shouldFinalize: false })
+            },
+        );
+        const data = await handleFetchResponse<entryResponseAPI>(response);
+        return data;
     }
 
     async getProof(projectID: string, address: string) {
