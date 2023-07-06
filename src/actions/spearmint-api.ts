@@ -65,14 +65,15 @@ export class ListAPI {
     headers: {'api-key': 'spsk_9U84OvT1ReIc8r0XP3nPZQsUEwYVnDtCMdtWajfI'}, //might need user to submit their own API key as well
   });
 
-  async createAttestationSchema(projectID: string) {
-    projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
+  async createAttestationSchema(projectID: string, apiKey: string) {
+    //projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
     const response = await this.fetch(
       `https://api.spearmint.xyz/projects/${projectID}/attestationSchema`,
       //'https://api.spearmint.xyz/projects/3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4/attestationSchema'
       {
         method: 'PUT',
         headers: {
+          authorization: `Bearer ${apiKey}`,
           accept: 'application/json',
           Authorization: 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL',
           'content-type': 'application/json',
