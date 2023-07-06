@@ -6,7 +6,6 @@
 import { HttpErrors, stringify } from '@collabland/common';
 import {
     APIInteractionResponse,
-    ApplicationCommandOptionType,
     ApplicationCommandSpec,
     ApplicationCommandType,
     BaseDiscordActionController,
@@ -15,7 +14,7 @@ import {
     DiscordActionResponse,
     DiscordInteractionPattern,
     InteractionResponseType,
-    InteractionType,
+    InteractionType
 } from '@collabland/discord';
 import { MiniAppManifest } from '@collabland/models';
 import { BindingScope, injectable } from '@loopback/core';
@@ -29,15 +28,11 @@ import {
     MessageActionRowComponentBuilder,
     MessageFlags,
     ModalActionRowComponentBuilder,
-    ModalBuilder,
-    RoleSelectMenuBuilder,
-    StringSelectMenuBuilder,
-    StringSelectMenuOptionBuilder,
     TextInputBuilder,
-    TextInputStyle,
-    UserSelectMenuBuilder,
+    TextInputStyle
 } from 'discord.js';
-
+//import { ListAPI } from './spearmint-api';
+//const debug = debugFactory('collabland:poll-action');
 /**
  * CollabActionController is a LoopBack REST API controller that exposes endpoints
  * to support Collab.Land actions for Discord interactions.
@@ -45,8 +40,8 @@ import {
 @injectable({
     scope: BindingScope.SINGLETON,
 })
-@api({ basePath: '/dev-action' }) // Set the base path to `/dev-action`
-export class DevActionController extends BaseDiscordActionController {
+@api({ basePath: '/allow-list' }) // Set the base path to `/allow-list`
+export class AllowListController extends BaseDiscordActionController {
     private interactions: {
         request: DiscordActionRequest<APIInteraction>;
         response: APIInteractionResponse;
@@ -84,11 +79,11 @@ export class DevActionController extends BaseDiscordActionController {
              * Miniapp manifest
              */
             manifest: new MiniAppManifest({
-                appId: 'dev-action',
+                appId: 'allow-list',
                 developer: 'collab.land',
-                name: 'DevAction',
+                name: 'AllowList',
                 platforms: ['discord'],
-                shortName: 'dev-action',
+                shortName: 'allow-list',
                 version: { name: '0.0.1' },
                 website: 'https://collab.land',
                 description:
@@ -113,30 +108,28 @@ export class DevActionController extends BaseDiscordActionController {
      * @param interaction - Discord interaction with Collab.Land action context
      * @returns - Discord interaction response
      */
+
     protected async handle(
         interaction: DiscordActionRequest<APIInteraction>,
-    ): Promise<DiscordActionResponse> {
+    ): Promise<DiscordActionResponse | undefined> {
+
+        const { Events, ModalBuilder } = require('discord.js');
+
+        console.log('interaction: %O', interaction);
         if (
-            interaction.type === InteractionType.MessageComponent &&
-            interaction.data.custom_id === 'dev:button:modal'
+            interaction.type === InteractionType.ApplicationCommand &&
+            interaction.data.name === 'list'
         ) {
             const data = new ModalBuilder()
-                .setTitle('Example modal')
-                .setCustomId('dev:modal:modal')
+                .setTitle('Create an allow list')
+                .setCustomId('list:modal:modal')
                 .addComponents(
                     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                         new TextInputBuilder()
-                            .setCustomId('dev:text:interaction')
-                            .setLabel('Interaction')
+                            .setCustomId('list:text:interaction')
+                            .setLabel('Input')
                             .setStyle(TextInputStyle.Paragraph)
-                            .setValue(this.describeInteraction(interaction)),
-                    ),
-                    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-                        new TextInputBuilder()
-                            .setCustomId('dev:text:interaction-data')
-                            .setLabel('Interaction data')
-                            .setStyle(TextInputStyle.Paragraph)
-                            .setValue(this.renderInteractionData(interaction, false)),
+                            .setPlaceholder('Project ID:')
                     ),
                 )
                 .toJSON();
@@ -154,69 +147,15 @@ export class DevActionController extends BaseDiscordActionController {
                         .setTitle('embed: Interaction')
                         .setDescription(this.describeInteraction(interaction))
                         .toJSON(),
-                    new EmbedBuilder()
-                        .setTitle('embed: Request data')
-                        .setDescription(this.renderInteractionData(interaction))
-                        .toJSON(),
                 ],
                 components: [
                     new ActionRowBuilder<MessageActionRowComponentBuilder>()
                         .addComponents([
                             new ButtonBuilder()
-                                .setLabel('link: Request/response')
-                                .setURL(
-                                    `http://localhost:3000/dev-action/interactions/${interaction.id}`,
-                                )
-                                .setStyle(ButtonStyle.Link),
-                            new ButtonBuilder()
-                                .setLabel('button: Click me')
-                                .setCustomId('dev:button:click')
+                                .setLabel('Join')
+                                .setCustomId('list:button:click')
                                 .setStyle(ButtonStyle.Success),
-                            new ButtonBuilder()
-                                .setLabel('button: Render a modal')
-                                .setCustomId('dev:button:modal')
-                                .setStyle(ButtonStyle.Primary),
                         ])
-                        .toJSON(),
-
-                    new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                        .addComponents(
-                            new StringSelectMenuBuilder()
-                                .setCustomId('dev:select:string')
-                                .setPlaceholder('string-select-menu: Select a color')
-                                .addOptions(
-                                    new StringSelectMenuOptionBuilder()
-                                        .setLabel('Red')
-                                        .setValue('red'),
-                                    new StringSelectMenuOptionBuilder()
-                                        .setLabel('Green')
-                                        .setValue('green'),
-                                    new StringSelectMenuOptionBuilder()
-                                        .setLabel('Blue')
-                                        .setValue('blue'),
-                                ),
-                        )
-                        .toJSON(),
-
-                    new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                        .addComponents(
-                            new RoleSelectMenuBuilder()
-                                .setCustomId('dev:select:role')
-                                .setPlaceholder('role-select-menu: Select a role'),
-                        )
-                        .toJSON(),
-
-                    new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                        .addComponents(
-                            new UserSelectMenuBuilder()
-                                .setCustomId('dev:select:user')
-                                .setPlaceholder('user-select-menu: Select a user'),
-                            /*
-                            new ChannelSelectMenuBuilder()
-                              .setCustomId('dev:select:channel')
-                              .setPlaceholder('channel-select-menu: Select a channel'),
-                              */
-                        )
                         .toJSON(),
                 ],
             },
@@ -259,22 +198,22 @@ User name: ${interaction.member?.user.username}#${interaction.member?.user.discr
             {
                 // Handle slash command
                 type: InteractionType.ApplicationCommand,
-                names: ['dev*'],
+                names: ['list*'],
             },
             {
                 // Handle slash command with auto complete
                 type: InteractionType.ApplicationCommandAutocomplete,
-                names: ['dev*'],
+                names: ['list*'],
             },
             {
                 // Handle buttons/selections
                 type: InteractionType.MessageComponent,
-                ids: ['dev:*'],
+                ids: ['list:*'],
             },
             {
                 // Handle modal
                 type: InteractionType.ModalSubmit,
-                ids: ['dev:*'],
+                ids: ['list:*'],
             },
         ];
     }
@@ -286,112 +225,16 @@ User name: ${interaction.member?.user.username}#${interaction.member?.user.discr
      */
     private getApplicationCommands(): ApplicationCommandSpec[] {
         const commands: ApplicationCommandSpec[] = [
-            // `/dev-action` slash command
+            // `/poll-action` slash command
             {
                 metadata: {
-                    name: 'DevAction',
-                    shortName: 'dev-action',
-                    supportedEnvs: ['dev', 'qa', 'staging'],
+                    name: 'AllowList',
+                    shortName: 'allow-list',
+                    supportedEnvs: ['list', 'qa', 'staging'],
                 },
                 type: ApplicationCommandType.ChatInput,
-                name: 'dev',
-                description: 'Collab.Land root command',
-                options: [
-                    {
-                        name: 'user',
-                        description: 'Get or edit permissions for a user',
-                        type: ApplicationCommandOptionType.SubcommandGroup,
-                        options: [
-                            {
-                                name: 'get',
-                                description: 'Get permissions for a user',
-                                type: ApplicationCommandOptionType.Subcommand,
-                                options: [
-                                    {
-                                        name: 'user',
-                                        description: 'The user to get',
-                                        type: ApplicationCommandOptionType.User,
-                                        required: true,
-                                    },
-                                    {
-                                        name: 'channel',
-                                        description:
-                                            'The channel permissions to get. If omitted, the guild permissions will be returned',
-                                        type: ApplicationCommandOptionType.Channel,
-                                        required: false,
-                                    },
-                                ],
-                            },
-                            {
-                                name: 'edit',
-                                description: 'Edit permissions for a user',
-                                type: ApplicationCommandOptionType.Subcommand,
-                                options: [
-                                    {
-                                        name: 'user',
-                                        description: 'The user to edit',
-                                        type: ApplicationCommandOptionType.User,
-                                        required: true,
-                                    },
-                                    {
-                                        name: 'channel',
-                                        description:
-                                            'The channel permissions to edit. If omitted, the guild permissions will be edited',
-                                        type: ApplicationCommandOptionType.Channel,
-                                        required: false,
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                    {
-                        name: 'role',
-                        description: 'Get or edit permissions for a role',
-                        type: ApplicationCommandOptionType.SubcommandGroup,
-                        options: [
-                            {
-                                name: 'get',
-                                description: 'Get permissions for a role',
-                                type: ApplicationCommandOptionType.Subcommand,
-                                options: [
-                                    {
-                                        name: 'role',
-                                        description: 'The role to get',
-                                        type: ApplicationCommandOptionType.Role,
-                                        required: true,
-                                    },
-                                    {
-                                        name: 'channel',
-                                        description:
-                                            'The channel permissions to get. If omitted, the guild permissions will be returned',
-                                        type: ApplicationCommandOptionType.Channel,
-                                        required: false,
-                                    },
-                                ],
-                            },
-                            {
-                                name: 'edit',
-                                description: 'Edit permissions for a role',
-                                type: ApplicationCommandOptionType.Subcommand,
-                                options: [
-                                    {
-                                        name: 'role',
-                                        description: 'The role to edit',
-                                        type: ApplicationCommandOptionType.Role,
-                                        required: true,
-                                    },
-                                    {
-                                        name: 'channel',
-                                        description:
-                                            'The channel permissions to edit. If omitted, the guild permissions will be edited',
-                                        type: ApplicationCommandOptionType.Channel,
-                                        required: false,
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
+                name: 'list',
+                description: 'list command',
             },
         ];
         return commands;

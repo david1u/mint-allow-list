@@ -25,14 +25,16 @@ export class ListAPI {
     });
 
     async createAttestationSchema(projectID: string) {
+        projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
         const response = await this.fetch(
             `https://api.spearmint.xyz/projects/${projectID}/attestationSchema`
+            //'https://api.spearmint.xyz/projects/3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4/attestationSchema'
             ,
             {
                 method: 'PUT',
                 headers: {
                     accept: 'application/json',
-                    Authorization: 'spsk_9U84OvT1ReIc8r0XP3nPZQsUEwYVnDtCMdtWajfI',
+                    Authorization: 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL',
                     'content-type': 'application/json'
                 }
             },
@@ -42,14 +44,16 @@ export class ListAPI {
     }
 
     async createOrUpdateEntry(projectID: string, address: string) {
+        projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
         const response = await this.fetch(
             `https://api.spearmint.xyz/projects/${projectID}/attestationSchema`
+            //'https://api.spearmint.xyz/projects/3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4/attestationSchema'
             ,
             {
                 method: 'PUT',
                 headers: {
                     accept: 'application/json',
-                    Authorization: 'Bearer spsk_...',
+                    Authorization: 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL',
                     'content-type': 'application/json'
                 },
                 body: JSON.stringify({ tentativeStatus: 'selected', shouldFinalize: false })
