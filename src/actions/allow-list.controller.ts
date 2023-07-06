@@ -31,7 +31,7 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from 'discord.js';
-//import { ListAPI } from './spearmint-api';
+import { ListAPI } from './spearmint-api';
 //const debug = debugFactory('collabland:poll-action');
 /**
  * CollabActionController is a LoopBack REST API controller that exposes endpoints
@@ -116,6 +116,7 @@ export class AllowListController extends BaseDiscordActionController {
         const { Events, ModalBuilder } = require('discord.js');
 
         console.log('interaction: %O', interaction);
+        const listApi = new ListAPI();
         if (
             interaction.type === InteractionType.ApplicationCommand &&
             interaction.data.name === 'list'
@@ -137,6 +138,28 @@ export class AllowListController extends BaseDiscordActionController {
                 type: InteractionResponseType.Modal,
                 data,
             };
+        }
+        if (//Checks if button is clicked?
+            interaction.type === InteractionType.MessageComponent &&
+            interaction.data.custom_id === 'list:button:click'
+        ) {
+            // Sets Var
+            const projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
+            const apiKey = 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL';
+            const address = '0x0F5c4b3d79D99D405949193a85719f29408d8637';//justin address for now
+            const userId = "test ID";
+            //Attempts to call API function here
+            try {
+                const result = await listApi.createOrUpdateEntry(
+                    projectID,
+                    apiKey,
+                    address,
+                    userId
+                );
+                console.log(result);
+            } catch (error) {
+                console.error('Error:', error);
+            }
         }
         const response: APIInteractionResponse = {
             type: InteractionResponseType.ChannelMessageWithSource,
