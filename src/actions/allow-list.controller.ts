@@ -121,28 +121,56 @@ export class AllowListController extends BaseDiscordActionController {
 
         console.log('interaction: %O', interaction);
         const listApi = new ListAPI();
-        //if (
-        //    interaction.type === InteractionType.ApplicationCommand &&
-        //    interaction.data.name === 'list'
-        //) {
-        //    const data = new ModalBuilder()
-        //        .setTitle('Create an allow list')
-        //        .setCustomId('list:modal:modal')
-        //        .addComponents(
-        //            new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-        //                new TextInputBuilder()
-        //                    .setCustomId('list:text:interaction')
-        //                    .setLabel('Input')
-        //                    .setStyle(TextInputStyle.Paragraph)
-        //                    .setPlaceholder('Project ID:')
-        //            ),
-        //        )
-        //        .toJSON();
-        //    return {
-        //        type: InteractionResponseType.Modal,
-        //        data,
-        //    };
-        //}
+        if (
+            interaction.type === InteractionType.ApplicationCommand &&
+            interaction.data.name === 'list'
+        ) {
+            const response: APIInteractionResponse = {
+                type: InteractionResponseType.ChannelMessageWithSource,
+                data: {
+                    flags: MessageFlags.Ephemeral,
+                    embeds: [
+                        new EmbedBuilder()
+                            .setTitle('Spearmint Allow List')
+                            .setDescription(this.describeInteraction(interaction))
+                            .toJSON(),
+                    ],
+                    components: [
+                        new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                            .addComponents([
+                                new ButtonBuilder()
+                                    .setLabel('Join')
+                                    .setCustomId('list:button:join')
+                                    .setStyle(ButtonStyle.Success),
+                            ])
+                            .toJSON(),
+                    ],
+                },
+            };
+            this.interactions.push({
+                request: interaction,
+                response,
+                timestamp: Date.now(),
+            });
+            return response;
+            //    const data = new ModalBuilder()
+            //        .setTitle('Create an allow list')
+            //        .setCustomId('list:modal:modal')
+            //        .addComponents(
+            //            new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+            //                new TextInputBuilder()
+            //                    .setCustomId('list:text:interaction')
+            //                    .setLabel('Input')
+            //                    .setStyle(TextInputStyle.Paragraph)
+            //                    .setPlaceholder('Project ID:')
+            //            ),
+            //        )
+            //        .toJSON();
+            //    return {
+            //        type: InteractionResponseType.Modal,
+            //        data,
+            //    };
+        }
 
         if (//Checks if button is clicked?
             interaction.type === InteractionType.MessageComponent &&
@@ -190,34 +218,7 @@ export class AllowListController extends BaseDiscordActionController {
             }
         }
         //Bot message that is sent when '/list' slash command is called
-        const response: APIInteractionResponse = {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-                flags: MessageFlags.Ephemeral,
-                embeds: [
-                    new EmbedBuilder()
-                        .setTitle('Spearmint Allow List')
-                        .setDescription(this.describeInteraction(interaction))
-                        .toJSON(),
-                ],
-                components: [
-                    new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                        .addComponents([
-                            new ButtonBuilder()
-                                .setLabel('Join')
-                                .setCustomId('list:button:join')
-                                .setStyle(ButtonStyle.Success),
-                        ])
-                        .toJSON(),
-                ],
-            },
-        };
-        this.interactions.push({
-            request: interaction,
-            response,
-            timestamp: Date.now(),
-        });
-        return response;
+
     }
 
     private renderInteractionData(
