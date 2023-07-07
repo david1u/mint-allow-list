@@ -147,7 +147,7 @@ export class AllowListController extends BaseDiscordActionController {
             const projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
             const apiKey = 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL';
             const address = '0x0F5c4b3d79D99D405949193a85719f29408d8637';//justin address for now
-            const userId = "test ID";
+            const userId = interaction.member?.user.id;
             //Attempts to call API function here
             try {
                 const result = await listApi.createOrUpdateEntry(

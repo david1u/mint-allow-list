@@ -74,11 +74,14 @@ export class ListAPI {
         body: JSON.stringify([
           {
             name: "userId",
-            type: "string"
+            type: "string",
+            defaultValue: "user-id"
           },
+
           {
             name: "timestamp",
-            type: "uint256"
+            type: "uint256",
+            defaultValue: "0"
           }
         ]),
         headers: {
@@ -96,7 +99,7 @@ export class ListAPI {
     projectID: string,
     apiKey: string,
     address: string,
-    ID: string,
+    ID: string = "",
   ) {
 
     await this.createAttestationSchema(projectID, apiKey);
@@ -113,10 +116,12 @@ export class ListAPI {
         body: JSON.stringify({
           tentativeStatus: 'selected',
           shouldFinalize: false,
+
           attestationData: {
             userId: ID,
-            timestamp: Date.now()
+            timestamp: Date.now().toString()
           }
+
         }),
       },
     );
@@ -163,15 +168,4 @@ export class ListAPI {
 }
 
 async function main() {
-  const listApi = new ListAPI();
-  const projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
-  const apiKey = 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL';
-
-  try {
-    await listApi.createAttestationSchema(projectID, apiKey);
-    console.log('Attestation schema created successfully.');
-  } catch (error) {
-    console.error('Error creating attestation schema:', error);
-  }
 }
-main();
