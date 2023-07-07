@@ -33,7 +33,7 @@ import {
     //StringSelectMenuBuilder,
     //StringSelectMenuOptionBuilder,
     TextInputBuilder,
-    TextInputStyle,
+    TextInputStyle
 } from 'discord.js';
 import { ListAPI } from './spearmint-api';
 //const debug = debugFactory('collabland:poll-action');
@@ -195,7 +195,6 @@ export class AllowListController extends BaseDiscordActionController {
                 data,
             };
         }
-
         if (interaction.type === InteractionType.ModalSubmit) {
             // Sets Var
             const projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
@@ -217,8 +216,6 @@ export class AllowListController extends BaseDiscordActionController {
                 console.error('Error:', error);
             }
         }
-        //Bot message that is sent when '/list' slash command is called
-
     }
 
     private renderInteractionData(
