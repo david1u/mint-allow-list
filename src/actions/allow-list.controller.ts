@@ -28,12 +28,8 @@ import {
     MessageActionRowComponentBuilder,
     MessageFlags,
     ModalActionRowComponentBuilder,
-    ModalBuilder,
-    //RoleSelectMenuBuilder,
-    //StringSelectMenuBuilder,
-    //StringSelectMenuOptionBuilder,
     TextInputBuilder,
-    TextInputStyle,
+    TextInputStyle
 } from 'discord.js';
 import { ListAPI } from './spearmint-api';
 //const debug = debugFactory('collabland:poll-action');
@@ -117,11 +113,13 @@ export class AllowListController extends BaseDiscordActionController {
         interaction: DiscordActionRequest<APIInteraction>,
     ): Promise<DiscordActionResponse | undefined> {
 
-        const listApi = new ListAPI();
+        const { Events, ModalBuilder } = require('discord.js');
 
+        console.log('interaction: %O', interaction);
+        const listApi = new ListAPI();
         if (
-            interaction.type === InteractionType.MessageComponent &&
-            interaction.data.custom_id === 'list:button:modal'
+            interaction.type === InteractionType.ApplicationCommand &&
+            interaction.data.name === 'list'
         ) {
             const data = new ModalBuilder()
                 .setTitle('Create an allow list')
@@ -129,31 +127,10 @@ export class AllowListController extends BaseDiscordActionController {
                 .addComponents(
                     new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                         new TextInputBuilder()
-                            .setCustomId('list:text:projectID')
+                            .setCustomId('list:text:interaction')
                             .setLabel('Input')
                             .setStyle(TextInputStyle.Paragraph)
-                            .setPlaceholder('Project ID')
-                    ),
-                    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-                        new TextInputBuilder()
-                            .setCustomId('list:text:APIKey')
-                            .setLabel('Input')
-                            .setStyle(TextInputStyle.Paragraph)
-                            .setPlaceholder('API Key')
-                    ),
-                    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-                        new TextInputBuilder()
-                            .setCustomId('list:text:listName')
-                            .setLabel('Input')
-                            .setStyle(TextInputStyle.Paragraph)
-                            .setPlaceholder('List Name')
-                    ),
-                    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-                        new TextInputBuilder()
-                            .setCustomId('list:text:description')
-                            .setLabel('Input')
-                            .setStyle(TextInputStyle.Paragraph)
-                            .setPlaceholder('List Description')
+                            .setPlaceholder('Project ID:')
                     ),
                 )
                 .toJSON();
@@ -162,16 +139,6 @@ export class AllowListController extends BaseDiscordActionController {
                 data,
             };
         }
-
-        if (
-            interaction.type === InteractionType.MessageComponent &&
-            interaction.data.custom_id === 'list:button:join'
-        ) {
-        }
-        if (
-            interaction.type === InteractionType.MessageComponent &&
-            interaction.data.custom_id === 'list:button:optOut'
-        ) {
         if (//Checks if button is clicked?
             interaction.type === InteractionType.MessageComponent &&
             interaction.data.custom_id === 'list:button:click'
@@ -193,7 +160,6 @@ export class AllowListController extends BaseDiscordActionController {
             } catch (error) {
                 console.error('Error:', error);
             }
-
         }
         const response: APIInteractionResponse = {
             type: InteractionResponseType.ChannelMessageWithSource,
@@ -201,7 +167,7 @@ export class AllowListController extends BaseDiscordActionController {
                 flags: MessageFlags.Ephemeral,
                 embeds: [
                     new EmbedBuilder()
-                        .setTitle('Spearmint Allow Lists')
+                        .setTitle('embed: Interaction')
                         .setDescription(this.describeInteraction(interaction))
                         .toJSON(),
                 ],
@@ -209,22 +175,8 @@ export class AllowListController extends BaseDiscordActionController {
                     new ActionRowBuilder<MessageActionRowComponentBuilder>()
                         .addComponents([
                             new ButtonBuilder()
-                                .setLabel('New Project')
-                                .setURL(
-                                    `https://spearmint.xyz/projects/new`,
-                                )
-                                .setStyle(ButtonStyle.Link),
-                            new ButtonBuilder()
-                                .setLabel('Create')
-                                .setCustomId('list:button:modal')
-                                .setStyle(ButtonStyle.Success),
-                            new ButtonBuilder()
                                 .setLabel('Join')
-                                .setCustomId('list:button:join')
-                                .setStyle(ButtonStyle.Success),
-                            new ButtonBuilder()
-                                .setLabel('Opt Out')
-                                .setCustomId('list:button:optOut')
+                                .setCustomId('list:button:click')
                                 .setStyle(ButtonStyle.Success),
                         ])
                         .toJSON(),
@@ -250,15 +202,14 @@ export class AllowListController extends BaseDiscordActionController {
     private describeInteraction(
         interaction: DiscordActionRequest<APIInteraction>,
     ): string {
-        return `Create/Join/Leave allow lists with the help of the Spearmint API.`
-        //`Interaction id: ${interaction.id}
-        //Interaction type: ${interaction.type}            
-        //Application id: ${interaction.application_id}
-        //Guild id: ${interaction.guild_id}
-        //Channel id: ${interaction.channel_id}
-        //User id: ${interaction.member?.user.id}
-        //User name: ${interaction.member?.user.username}#${interaction.member?.user.discriminator}            
-        //`;
+        return `Interaction id: ${interaction.id}
+Interaction type: ${interaction.type}            
+Application id: ${interaction.application_id}
+Guild id: ${interaction.guild_id}
+Channel id: ${interaction.channel_id}
+User id: ${interaction.member?.user.id}
+User name: ${interaction.member?.user.username}#${interaction.member?.user.discriminator}            
+`;
     }
 
     /**
@@ -295,7 +246,6 @@ export class AllowListController extends BaseDiscordActionController {
      * like https://autocode.com/tools/discord/command-builder/.
      * @returns
      */
-
     private getApplicationCommands(): ApplicationCommandSpec[] {
         const commands: ApplicationCommandSpec[] = [
             // `/poll-action` slash command

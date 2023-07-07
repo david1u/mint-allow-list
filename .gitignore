@@ -66,5 +66,3 @@ typings/
 src/types
 
 .idea/
-
-src/actions/dev-action.controller.ts
