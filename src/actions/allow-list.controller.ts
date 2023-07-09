@@ -124,6 +124,7 @@ export class AllowListController extends BaseDiscordActionController {
             interaction.type === InteractionType.ApplicationCommand &&
             interaction.data.name === 'list'
         ) {
+
             if ('status' in interaction.data) {
                 {
                     const response: APIInteractionResponse = {
@@ -191,12 +192,12 @@ export class AllowListController extends BaseDiscordActionController {
             });
             return response;
         }
-        /*
+
         if (
-            interaction.type === InteractionType.ApplicationCommand &&
-            interaction.data.name === 'list-status'
+            interaction.type === InteractionType.MessageComponent &&
+            interaction.data.custom_id === 'list:button:status'
         ) {
-            //const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
+            const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
             {
                 const response: APIInteractionResponse = {
                     type: InteractionResponseType.ChannelMessageWithSource,
@@ -205,7 +206,7 @@ export class AllowListController extends BaseDiscordActionController {
                         embeds: [
                             new EmbedBuilder()
                                 .setTitle('AllowList Status')
-                                .setDescription("test")
+                                .setDescription(entryStatus.data.status)
                                 .toJSON(),
                         ],
                         components: [
@@ -228,7 +229,7 @@ export class AllowListController extends BaseDiscordActionController {
                 return response;
             }
         }
-        */
+
         if (//Checks if button is clicked?
             interaction.type === InteractionType.MessageComponent &&
             interaction.data.custom_id === 'list:button:join'
@@ -305,7 +306,7 @@ export class AllowListController extends BaseDiscordActionController {
         }
 
         if (interaction.type === InteractionType.ModalSubmit) {
-            const address = interaction.data.components[0].components[0].value.trim();//will remove when address is automated
+            //const address = interaction.data.components[0].components[0].value.trim();//will remove when address is automated
             const status = 'not_selected'
             try {
                 //Attempts to call API function here
