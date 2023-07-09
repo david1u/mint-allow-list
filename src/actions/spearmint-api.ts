@@ -100,6 +100,7 @@ export class ListAPI {
     apiKey: string,
     address: string,
     ID: string = "",
+    status: string,
   ) {
 
     await this.createAttestationSchema(projectID, apiKey);
@@ -114,7 +115,7 @@ export class ListAPI {
         },
         method: 'PUT',
         body: JSON.stringify({
-          tentativeStatus: 'selected',
+          tentativeStatus: status,
           shouldFinalize: false,
 
           attestationData: {
