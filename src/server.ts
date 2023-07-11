@@ -4,7 +4,7 @@
 // License text available at https://opensource.org/licenses/MIT
 
 import {generateEcdsaKeyPair, generateEd25519KeyPair} from '@collabland/action';
-import {getEnvVar, setEnvVar} from '@collabland/common';
+import {getEnvVar, isMain, setEnvVar} from '@collabland/common';
 import {ApplicationConfig} from '@loopback/core';
 import {HelloActionApplication} from './application.js';
 
@@ -53,9 +53,6 @@ export async function main(config: ApplicationConfig = {}, publicKey?: string) {
   return {app, signingKey};
 }
 
-if (require.main === module) {
-  main().catch(err => {
-    console.error('Fail to start the dev action: %O', err);
-    process.exit(1);
-  });
+if (isMain(import.meta.url)) {
+  await main();
 }
