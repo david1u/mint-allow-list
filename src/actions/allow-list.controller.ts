@@ -42,6 +42,9 @@ import { ListAPI } from './spearmint-api.js';
 })
 @api({ basePath: '/allow-list' }) // Set the base path to `/allow-list`
 export class AllowListController extends BaseDiscordActionController {
+    private address?: string;
+    private projectID?: string;
+    private apiKey?: string;
     private interactions: {
         request: DiscordActionRequest<APIInteraction>;
         response: APIInteractionResponse;
@@ -113,7 +116,7 @@ export class AllowListController extends BaseDiscordActionController {
         interaction: DiscordActionRequest<APIInteraction>,
     ): Promise<DiscordActionResponse | undefined> {
 
-
+        //interaction.actionContext.wall...
         const projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
         const apiKey = 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL';
         const address = '0x0F5c4b3d79D99D405949193a85719f29408d8637';
@@ -127,6 +130,54 @@ export class AllowListController extends BaseDiscordActionController {
             const args = cmd.args;
 
             //{ create: { wallet: 'd', projectid: 'd', apikey: 'd' } }
+            const isAdmin = interaction.member?.permissions;//NO WORKING IGNORE FOR NOW
+
+            if (!isAdmin) {
+                console.log(isAdmin);
+                // User is not an admin, handle the access denied case
+                const response: APIInteractionResponse = {
+                    type: InteractionResponseType.ChannelMessageWithSource,
+                    data: {
+                        content: 'This command is only accessible to administrators.',
+                        flags: MessageFlags.Ephemeral,
+                    },
+                };
+                return response;
+            } else if (args.create) {
+                console.log(isAdmin);
+                this.address = args.create.wallet;
+                this.projectID = args.create.projectid;
+                this.apiKey = args.create.apikey;
+
+                const response: APIInteractionResponse = {
+                    type: InteractionResponseType.ChannelMessageWithSource,
+                    data: {
+                        flags: MessageFlags.Ephemeral,
+                        embeds: [
+                            new EmbedBuilder()
+                                .setTitle('Spearmint Allow List')
+                                .setDescription(this.describeInteraction(interaction))
+                                .toJSON(),
+                        ],
+                        components: [
+                            new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                                .addComponents([
+                                    new ButtonBuilder()
+                                        .setLabel('Join')
+                                        .setCustomId('list:button:join')
+                                        .setStyle(ButtonStyle.Success),
+                                ])
+                                .toJSON(),
+                        ],
+                    },
+                };
+                this.interactions.push({
+                    request: interaction,
+                    response,
+                    timestamp: Date.now(),
+                });
+                return response;
+            }
 
             if (args.status) {
                 {
@@ -160,41 +211,6 @@ export class AllowListController extends BaseDiscordActionController {
                     });
                     return response;
                 }
-
-            }
-            //const projectID = interaction.options.get("Project-ID");
-            //const apiKey = interaction.options.get("API-Key");
-            //const address = interaction.options.get("Wallet-Address");//mine for now
-            //const userId = interaction.member?.user.id;
-            if (args.create) {
-                const response: APIInteractionResponse = {
-                    type: InteractionResponseType.ChannelMessageWithSource,
-                    data: {
-                        flags: MessageFlags.Ephemeral,
-                        embeds: [
-                            new EmbedBuilder()
-                                .setTitle('Spearmint Allow List')
-                                .setDescription(this.describeInteraction(interaction))
-                                .toJSON(),
-                        ],
-                        components: [
-                            new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                                .addComponents([
-                                    new ButtonBuilder()
-                                        .setLabel('Join')
-                                        .setCustomId('list:button:join')
-                                        .setStyle(ButtonStyle.Success),
-                                ])
-                                .toJSON(),
-                        ],
-                    },
-                };
-                this.interactions.push({
-                    request: interaction,
-                    response,
-                    timestamp: Date.now(),
-                });
-                return response;
             }
         }
 
