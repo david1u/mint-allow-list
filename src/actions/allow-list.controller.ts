@@ -14,28 +14,24 @@ import {
     DiscordActionResponse,
     DiscordInteractionPattern,
     InteractionResponseType,
-    InteractionType
+    InteractionType,
+    parseApplicationCommand
 } from '@collabland/discord';
 import { MiniAppManifest } from '@collabland/models';
 import { BindingScope, injectable } from '@loopback/core';
 import { api, get, param } from '@loopback/rest';
 import {
+    APIChatInputApplicationCommandInteraction,
     APIInteraction,
     ActionRowBuilder,
+    ApplicationCommandOptionType,
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
     MessageActionRowComponentBuilder,
-    MessageFlags,
-    ModalActionRowComponentBuilder,
-    //ModalBuilder,
-    //RoleSelectMenuBuilder,
-    //StringSelectMenuBuilder,
-    //StringSelectMenuOptionBuilder,
-    TextInputBuilder,
-    TextInputStyle
+    MessageFlags
 } from 'discord.js';
-import { ListAPI } from './spearmint-api';
+import { ListAPI } from './spearmint-api.js';
 //const debug = debugFactory('collabland:poll-action');
 /**
  * CollabActionController is a LoopBack REST API controller that exposes endpoints
@@ -46,6 +42,9 @@ import { ListAPI } from './spearmint-api';
 })
 @api({ basePath: '/allow-list' }) // Set the base path to `/allow-list`
 export class AllowListController extends BaseDiscordActionController {
+    private address?: string;
+    private projectID?: string;
+    private apiKey?: string;
     private interactions: {
         request: DiscordActionRequest<APIInteraction>;
         response: APIInteractionResponse;
@@ -117,14 +116,159 @@ export class AllowListController extends BaseDiscordActionController {
         interaction: DiscordActionRequest<APIInteraction>,
     ): Promise<DiscordActionResponse | undefined> {
 
-        const { Events, ModalBuilder } = require('discord.js');
+        //interaction.actionContext.wall...
+        const projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
+        const apiKey = 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL';
+        const address = '0x0F5c4b3d79D99D405949193a85719f29408d8637';
+        const userId = interaction.member?.user.id;
 
-        console.log('interaction: %O', interaction);
         const listApi = new ListAPI();
         if (
-            interaction.type === InteractionType.ApplicationCommand &&
-            interaction.data.name === 'list'
+            interaction.type === InteractionType.ApplicationCommand
         ) {
+            const cmd = parseApplicationCommand(interaction as APIChatInputApplicationCommandInteraction);
+            const args = cmd.args;
+
+            //{ create: { wallet: 'd', projectid: 'd', apikey: 'd' } }
+            const isAdmin = interaction.member?.permissions;//NO WORKING IGNORE FOR NOW
+
+            if (!isAdmin) {
+                console.log(isAdmin);
+                // User is not an admin, handle the access denied case
+                const response: APIInteractionResponse = {
+                    type: InteractionResponseType.ChannelMessageWithSource,
+                    data: {
+                        content: 'This command is only accessible to administrators.',
+                        flags: MessageFlags.Ephemeral,
+                    },
+                };
+                return response;
+            } else if (args.create) {
+                console.log(isAdmin);
+                this.address = args.create.wallet;
+                this.projectID = args.create.projectid;
+                this.apiKey = args.create.apikey;
+
+                const response: APIInteractionResponse = {
+                    type: InteractionResponseType.ChannelMessageWithSource,
+                    data: {
+                        flags: MessageFlags.Ephemeral,
+                        embeds: [
+                            new EmbedBuilder()
+                                .setTitle('Spearmint Allow List')
+                                .setDescription(this.describeInteraction(interaction))
+                                .toJSON(),
+                        ],
+                        components: [
+                            new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                                .addComponents([
+                                    new ButtonBuilder()
+                                        .setLabel('Join')
+                                        .setCustomId('list:button:join')
+                                        .setStyle(ButtonStyle.Success),
+                                ])
+                                .toJSON(),
+                        ],
+                    },
+                };
+                this.interactions.push({
+                    request: interaction,
+                    response,
+                    timestamp: Date.now(),
+                });
+                return response;
+            }
+
+            if (args.status) {
+                {
+                    const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
+                    const response: APIInteractionResponse = {
+                        type: InteractionResponseType.ChannelMessageWithSource,
+                        data: {
+                            flags: MessageFlags.Ephemeral,
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle('AllowList Status')
+                                    .setDescription(`Your current status is: ${entryStatus.data.status}`)
+                                    .toJSON(),
+                            ],
+                            components: [
+                                new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                                    .addComponents([
+                                        new ButtonBuilder()
+                                            .setLabel('leave')
+                                            .setCustomId('list:button:leave')
+                                            .setStyle(ButtonStyle.Danger),
+                                    ])
+                                    .toJSON(),
+                            ],
+                        },
+                    };
+                    this.interactions.push({
+                        request: interaction,
+                        response,
+                        timestamp: Date.now(),
+                    });
+                    return response;
+                }
+            }
+        }
+
+        if (
+            interaction.type === InteractionType.MessageComponent &&
+            interaction.data.custom_id === 'list:button:status'
+        ) {
+            const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
+            {
+                const response: APIInteractionResponse = {
+                    type: InteractionResponseType.ChannelMessageWithSource,
+                    data: {
+                        flags: MessageFlags.Ephemeral,
+                        embeds: [
+                            new EmbedBuilder()
+                                .setTitle('AllowList Status')
+                                .setDescription(entryStatus.data.status)
+                                .toJSON(),
+                        ],
+                        components: [
+                            new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                                .addComponents([
+                                    new ButtonBuilder()
+                                        .setLabel('leave')
+                                        .setCustomId('list:button:leave')
+                                        .setStyle(ButtonStyle.Danger),
+                                ])
+                                .toJSON(),
+                        ],
+                    },
+                };
+                this.interactions.push({
+                    request: interaction,
+                    response,
+                    timestamp: Date.now(),
+                });
+                return response;
+            }
+        }
+
+        if (//Checks if button is clicked?
+            interaction.type === InteractionType.MessageComponent &&
+            interaction.data.custom_id === 'list:button:join'
+        ) {
+            const status = 'not_selected'
+            try {
+                //Attempts to call API function here
+                const result = await listApi.createOrUpdateEntry(
+                    projectID,
+                    apiKey,
+                    address,
+                    userId,
+                    status
+                );
+                console.log(result);
+            } catch (error) {
+                console.error('Error:', error);
+            }
             const response: APIInteractionResponse = {
                 type: InteractionResponseType.ChannelMessageWithSource,
                 data: {
@@ -132,14 +276,70 @@ export class AllowListController extends BaseDiscordActionController {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle('Spearmint Allow List')
-                            .setDescription(this.describeInteraction(interaction))
+                            .setDescription('You Have Been Entered')
                             .toJSON(),
                     ],
                     components: [
                         new ActionRowBuilder<MessageActionRowComponentBuilder>()
                             .addComponents([
                                 new ButtonBuilder()
-                                    .setLabel('Join')
+                                    .setLabel('status')
+                                    .setCustomId('list:button:status')
+                                    .setStyle(ButtonStyle.Primary),
+                            ])
+                            .addComponents([
+                                new ButtonBuilder()
+                                    .setLabel('leave')
+                                    .setCustomId('list:button:leave')
+                                    .setStyle(ButtonStyle.Danger),
+                            ])
+                            .toJSON(),
+                    ],
+                },
+            };
+            this.interactions.push({
+                request: interaction,
+                response,
+                timestamp: Date.now(),
+            });
+            return response;
+        }
+
+        if (//Checks if leave button is clicked?
+            interaction.type === InteractionType.MessageComponent &&
+            interaction.data.custom_id === 'list:button:leave'
+        ) {
+            // Sets Var
+            const status = 'disqualified'
+            try {
+                //Attempts to call API function here
+                const result = await listApi.createOrUpdateEntry(
+                    projectID,
+                    apiKey,
+                    address,
+                    userId,
+                    status
+                );
+                console.log(result);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+            const response: APIInteractionResponse = {
+                type: InteractionResponseType.ChannelMessageWithSource,
+                data: {
+                    flags: MessageFlags.Ephemeral,
+                    embeds: [
+                        new EmbedBuilder()
+                            .setTitle('[Name of allow list]')
+                            .setDescription("you have left [Name of Allow List]")
+                            .toJSON(),
+                    ],
+                    components: [
+                        new ActionRowBuilder<MessageActionRowComponentBuilder>()
+
+                            .addComponents([
+                                new ButtonBuilder()
+                                    .setLabel('join')
                                     .setCustomId('list:button:join')
                                     .setStyle(ButtonStyle.Success),
                             ])
@@ -153,68 +353,6 @@ export class AllowListController extends BaseDiscordActionController {
                 timestamp: Date.now(),
             });
             return response;
-            //    const data = new ModalBuilder()
-            //        .setTitle('Create an allow list')
-            //        .setCustomId('list:modal:modal')
-            //        .addComponents(
-            //            new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-            //                new TextInputBuilder()
-            //                    .setCustomId('list:text:interaction')
-            //                    .setLabel('Input')
-            //                    .setStyle(TextInputStyle.Paragraph)
-            //                    .setPlaceholder('Project ID:')
-            //            ),
-            //        )
-            //        .toJSON();
-            //    return {
-            //        type: InteractionResponseType.Modal,
-            //        data,
-            //    };
-        }
-
-        if (//Checks if button is clicked?
-            interaction.type === InteractionType.MessageComponent &&
-            interaction.data.custom_id === 'list:button:join'
-        ) {
-            //Creates the first modal to input your wallet address manually (will be automated)
-            const data = new ModalBuilder()
-                .setTitle('Join Info')
-                .setCustomId('list:modal:modal')
-                .addComponents(
-                    new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-                        new TextInputBuilder()
-                            .setCustomId('list:text:address')
-                            .setLabel('Please input your wallet address')
-                            .setStyle(TextInputStyle.Paragraph)
-                            .setPlaceholder('Wallet Address'),
-                    ),
-                )
-                .toJSON();
-            return {
-                type: InteractionResponseType.Modal,
-                data,
-            };
-        }
-        if (interaction.type === InteractionType.ModalSubmit) {
-            // Sets Var
-            const projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
-            const apiKey = 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL';
-            //const address = '0x0F5c4b3d79D99D405949193a85719f29408d8637';//justin address for now
-            const userId = interaction.member?.user.id;
-            //address = user input
-            const address = interaction.data.components[0].components[0].value.trim();
-            try {
-                //Attempts to call API function here
-                const result = await listApi.createOrUpdateEntry(
-                    projectID,
-                    apiKey,
-                    address,
-                    userId
-                );
-                console.log(result);
-            } catch (error) {
-                console.error('Error:', error);
-            }
         }
     }
 
@@ -277,7 +415,40 @@ export class AllowListController extends BaseDiscordActionController {
                 },
                 type: ApplicationCommandType.ChatInput,
                 name: 'list',
-                description: 'list command',
+                description: 'List command',
+                options: [
+                    // Subcommand: /list create
+                    {
+                        type: ApplicationCommandOptionType.Subcommand,
+                        name: 'create',
+                        description: 'Create new list',
+                        options: [
+                            {
+                                type: ApplicationCommandOptionType.String,
+                                name: 'wallet',
+                                description: 'wallet id',
+                                required: true,
+                            },
+                            {
+                                type: ApplicationCommandOptionType.String,
+                                name: 'projectid',
+                                description: 'Enter Project ID',
+                                required: true,
+                            },
+                            {
+                                type: ApplicationCommandOptionType.String,
+                                name: 'apikey',
+                                description: 'Enter API key',
+                                required: true,
+                            },
+                        ],
+                    },
+                    {
+                        type: ApplicationCommandOptionType.Subcommand,
+                        name: 'status',
+                        description: 'list status',
+                    },
+                ],
             },
         ];
         return commands;
