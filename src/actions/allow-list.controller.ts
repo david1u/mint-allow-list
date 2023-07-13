@@ -28,8 +28,12 @@ import {
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
+    //MessageActionRow,
+    //MessageSelectMenu,
     MessageActionRowComponentBuilder,
-    MessageFlags
+    MessageFlags,
+    StringSelectMenuBuilder,
+    StringSelectMenuOptionBuilder
 } from 'discord.js';
 import { ListAPI } from './spearmint-api.js';
 //const debug = debugFactory('collabland:poll-action');
@@ -122,6 +126,37 @@ export class AllowListController extends BaseDiscordActionController {
         const address = '0x0F5c4b3d79D99D405949193a85719f29408d8637';
         const userId = interaction.member?.user.id;
 
+        //temporary in-memory storage
+        // this is for creating an empty array where users input their own objects
+
+        //class projectInfo {
+        //    projectID: string;
+        //    apiKey: string;
+        //    constructor(id: string, key: string) {
+        //        this.projectID = id;
+        //        this.apiKey = key;
+        //    }
+        //}
+        //let storeProjects: projectInfo[] = [];
+
+        // this is hardcoded
+        const storeProjects = [
+            {
+                projectID: 'abcd',
+                apiKey: 'key1'
+            },
+            {
+                projectID: 'efgh',
+                apiKey: 'key2'
+            },
+            {
+                projectID: 'ijkl',
+                apiKey: 'key3'
+            }
+        ]
+
+
+
         const listApi = new ListAPI();
         if (
             interaction.type === InteractionType.ApplicationCommand
@@ -144,10 +179,19 @@ export class AllowListController extends BaseDiscordActionController {
                 };
                 return response;
             } else if (args.create) {
-                console.log(isAdmin);
+                //console.log(isAdmin);
                 this.address = args.create.wallet;
                 this.projectID = args.create.projectid;
                 this.apiKey = args.create.apikey;
+
+                // Adds inputted project ID into the array based on user input
+
+                //if (this.projectID && this.apiKey) {
+                //    storeProjects.push(
+                //        new projectInfo(this.projectID, this.apiKey)
+                //    );
+                //}
+
 
                 const response: APIInteractionResponse = {
                     type: InteractionResponseType.ChannelMessageWithSource,
@@ -180,8 +224,8 @@ export class AllowListController extends BaseDiscordActionController {
             }
 
             if (args.status) {
+                const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
                 {
-                    const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
                     const response: APIInteractionResponse = {
                         type: InteractionResponseType.ChannelMessageWithSource,
                         data: {
@@ -189,19 +233,30 @@ export class AllowListController extends BaseDiscordActionController {
                             embeds: [
                                 new EmbedBuilder()
                                     .setTitle('AllowList Status')
-                                    .setDescription(`Your current status is: ${entryStatus.data.status}`)
+                                    .setDescription(entryStatus.data.status)
                                     .toJSON(),
                             ],
                             components: [
                                 new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                                    .addComponents([
-                                        new ButtonBuilder()
-                                            .setLabel('leave')
-                                            .setCustomId('list:button:leave')
-                                            .setStyle(ButtonStyle.Danger),
-                                    ])
+                                    .addComponents(
+                                        new StringSelectMenuBuilder()
+                                            .setCustomId('dev:select:project')
+                                            .setPlaceholder('project-select-menu: Select a project')
+                                            .addOptions(
+                                                //hardcoded
+                                                new StringSelectMenuOptionBuilder()
+                                                    .setLabel(storeProjects[0].projectID) //projectID
+                                                    .setValue(storeProjects[0].apiKey),//apiKey
+                                                new StringSelectMenuOptionBuilder()
+                                                    .setLabel(storeProjects[1].projectID) //projectID
+                                                    .setValue(storeProjects[1].apiKey),//apiKey
+                                                new StringSelectMenuOptionBuilder()
+                                                    .setLabel(storeProjects[2].projectID) //projectID
+                                                    .setValue(storeProjects[2].apiKey),//apiKey
+                                            ),
+                                    )
                                     .toJSON(),
-                            ],
+                            ]
                         },
                     };
                     this.interactions.push({
@@ -211,6 +266,37 @@ export class AllowListController extends BaseDiscordActionController {
                     });
                     return response;
                 }
+                //{
+                //    const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
+                //    const response: APIInteractionResponse = {
+                //        type: InteractionResponseType.ChannelMessageWithSource,
+                //        data: {
+                //            flags: MessageFlags.Ephemeral,
+                //            embeds: [
+                //                new EmbedBuilder()
+                //                    .setTitle('AllowList Status')
+                //                    .setDescription(`Your current status is: ${entryStatus.data.status}`)
+                //                    .toJSON(),
+                //            ],
+                //            components: [
+                //                new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                //                    .addComponents([
+                //                        new ButtonBuilder()
+                //                            .setLabel('leave')
+                //                            .setCustomId('list:button:leave')
+                //                            .setStyle(ButtonStyle.Danger),
+                //                    ])
+                //                    .toJSON(),
+                //            ],
+                //        },
+                //    };
+                //    this.interactions.push({
+                //        request: interaction,
+                //        response,
+                //        timestamp: Date.now(),
+                //    });
+                //    return response;
+                //}
             }
         }
 
