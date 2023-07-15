@@ -28,14 +28,14 @@ import {
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
-    //MessageActionRow,
-    //MessageSelectMenu,
     MessageActionRowComponentBuilder,
     MessageFlags,
     StringSelectMenuBuilder,
     StringSelectMenuOptionBuilder
 } from 'discord.js';
+import { AirtableAPI } from './airtable-api.js';
 import { ListAPI } from './spearmint-api.js';
+
 //const debug = debugFactory('collabland:poll-action');
 /**
  * CollabActionController is a LoopBack REST API controller that exposes endpoints
@@ -44,16 +44,26 @@ import { ListAPI } from './spearmint-api.js';
 @injectable({
     scope: BindingScope.SINGLETON,
 })
+class projectInfo {
+    projectIDObject: string;
+    apiKeyObject: string;
+    constructor(id: string, key: string) {
+        this.projectIDObject = id;
+        this.apiKeyObject = key;
+    }
+}
+
 @api({ basePath: '/allow-list' }) // Set the base path to `/allow-list`
 export class AllowListController extends BaseDiscordActionController {
-    private address?: string;
-    private projectID?: string;
-    private apiKey?: string;
+    private address: string = "";
+    private projectID: string = "";
+    private apiKey: string = "";
     private interactions: {
         request: DiscordActionRequest<APIInteraction>;
         response: APIInteractionResponse;
         timestamp: number;
     }[] = [];
+    private storeProjects: string[] = [];
 
     @get('/interactions/{id}')
     async getInteraction(@param.path.string('id') interactionId: string) {
@@ -109,6 +119,27 @@ export class AllowListController extends BaseDiscordActionController {
         };
         return metadata;
     }
+    private async getProjectOptions(): Promise<StringSelectMenuOptionBuilder[]> {
+        const projectOptions: StringSelectMenuOptionBuilder[] = [];
+        console.log('storeProjects:', this.storeProjects); // Check if storeProjects is accessible and its current value
+
+        for (const apiKey of this.storeProjects) {
+            const option = new StringSelectMenuOptionBuilder()
+                .setLabel(apiKey);
+            projectOptions.push(option);
+        }
+        /*for (const project of this.storeProjects) {
+            console.log('project:', project); // Check each project object in the loop
+            const option = new StringSelectMenuOptionBuilder()
+                .setLabel(project.projectIDObject)
+                .setValue(project.apiKeyObject);
+            projectOptions.push(option);
+        }
+        */
+        console.log('projectOptions:', projectOptions); // Check the resulting projectOptions array
+
+        return projectOptions;
+    }
 
     /**
      * Handle the Discord interaction
@@ -126,37 +157,7 @@ export class AllowListController extends BaseDiscordActionController {
         const address = '0x0F5c4b3d79D99D405949193a85719f29408d8637';
         const userId = interaction.member?.user.id;
 
-        //temporary in-memory storage
-        // this is for creating an empty array where users input their own objects
-
-        //class projectInfo {
-        //    projectID: string;
-        //    apiKey: string;
-        //    constructor(id: string, key: string) {
-        //        this.projectID = id;
-        //        this.apiKey = key;
-        //    }
-        //}
-        //let storeProjects: projectInfo[] = [];
-
-        // this is hardcoded
-        const storeProjects = [
-            {
-                projectID: 'abcd',
-                apiKey: 'key1'
-            },
-            {
-                projectID: 'efgh',
-                apiKey: 'key2'
-            },
-            {
-                projectID: 'ijkl',
-                apiKey: 'key3'
-            }
-        ]
-
-
-
+        const airtable = new AirtableAPI();
         const listApi = new ListAPI();
         if (
             interaction.type === InteractionType.ApplicationCommand
@@ -186,17 +187,15 @@ export class AllowListController extends BaseDiscordActionController {
 
                 // Adds inputted project ID into the array based on user input
 
-                //if (this.projectID && this.apiKey) {
-                //    storeProjects.push(
-                //        new projectInfo(this.projectID, this.apiKey)
-                //    );
-                //}
+                if (this.projectID && this.apiKey) {
+                    console.log(this.projectID);
+                    this.storeProjects.push(this.apiKey);
+                }
 
 
                 const response: APIInteractionResponse = {
                     type: InteractionResponseType.ChannelMessageWithSource,
                     data: {
-                        flags: MessageFlags.Ephemeral,
                         embeds: [
                             new EmbedBuilder()
                                 .setTitle('Spearmint Allow List')
@@ -224,81 +223,71 @@ export class AllowListController extends BaseDiscordActionController {
             }
 
             if (args.status) {
+                //const selectedProject = args.status[0].options[0].value;
                 const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
-                {
-                    const response: APIInteractionResponse = {
-                        type: InteractionResponseType.ChannelMessageWithSource,
-                        data: {
-                            flags: MessageFlags.Ephemeral,
-                            embeds: [
-                                new EmbedBuilder()
-                                    .setTitle('AllowList Status')
-                                    .setDescription(entryStatus.data.status)
-                                    .toJSON(),
-                            ],
-                            components: [
-                                new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                                    .addComponents(
-                                        new StringSelectMenuBuilder()
-                                            .setCustomId('dev:select:project')
-                                            .setPlaceholder('project-select-menu: Select a project')
-                                            .addOptions(
-                                                //hardcoded
-                                                new StringSelectMenuOptionBuilder()
-                                                    .setLabel(storeProjects[0].projectID) //projectID
-                                                    .setValue(storeProjects[0].apiKey),//apiKey
-                                                new StringSelectMenuOptionBuilder()
-                                                    .setLabel(storeProjects[1].projectID) //projectID
-                                                    .setValue(storeProjects[1].apiKey),//apiKey
-                                                new StringSelectMenuOptionBuilder()
-                                                    .setLabel(storeProjects[2].projectID) //projectID
-                                                    .setValue(storeProjects[2].apiKey),//apiKey
-                                            ),
-                                    )
-                                    .toJSON(),
-                            ]
-                        },
-                    };
-                    this.interactions.push({
-                        request: interaction,
-                        response,
-                        timestamp: Date.now(),
-                    });
-                    return response;
-                }
-                //{
-                //    const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
-                //    const response: APIInteractionResponse = {
-                //        type: InteractionResponseType.ChannelMessageWithSource,
-                //        data: {
-                //            flags: MessageFlags.Ephemeral,
-                //            embeds: [
-                //                new EmbedBuilder()
-                //                    .setTitle('AllowList Status')
-                //                    .setDescription(`Your current status is: ${entryStatus.data.status}`)
-                //                    .toJSON(),
-                //            ],
-                //            components: [
-                //                new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                //                    .addComponents([
-                //                        new ButtonBuilder()
-                //                            .setLabel('leave')
-                //                            .setCustomId('list:button:leave')
-                //                            .setStyle(ButtonStyle.Danger),
-                //                    ])
-                //                    .toJSON(),
-                //            ],
-                //        },
-                //    };
-                //    this.interactions.push({
-                //        request: interaction,
-                //        response,
-                //        timestamp: Date.now(),
-                //    });
-                //    return response;
-                //}
+                const projectOptions = await this.getProjectOptions();
+                console.log(projectOptions);
+                console.log(this.storeProjects);
+
+                const selectMenu = new StringSelectMenuBuilder()
+                    .setCustomId('list:select:project')
+                    .setPlaceholder('Select a project')
+                    .setMinValues(1)
+                    .setMaxValues(1)
+                    .addOptions(projectOptions);
+
+                const actionRow = new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                    .addComponents(selectMenu);
+                const response: APIInteractionResponse = {
+                    type: InteractionResponseType.ChannelMessageWithSource,
+                    data: {
+                        flags: MessageFlags.Ephemeral,
+                        content: 'Please select a project:',
+                        components: [actionRow.toJSON()],
+                    },
+                };
+
+                this.interactions.push({
+                    request: interaction,
+                    response,
+                    timestamp: Date.now(),
+                });
+
+                return response;
             }
+            //{
+            //    const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
+            //    const response: APIInteractionResponse = {
+            //        type: InteractionResponseType.ChannelMessageWithSource,
+            //        data: {
+            //            flags: MessageFlags.Ephemeral,
+            //            embeds: [
+            //                new EmbedBuilder()
+            //                    .setTitle('AllowList Status')
+            //                    .setDescription(`Your current status is: ${entryStatus.data.status}`)
+            //                    .toJSON(),
+            //            ],
+            //            components: [
+            //                new ActionRowBuilder<MessageActionRowComponentBuilder>()
+            //                    .addComponents([
+            //                        new ButtonBuilder()
+            //                            .setLabel('leave')
+            //                            .setCustomId('list:button:leave')
+            //                            .setStyle(ButtonStyle.Danger),
+            //                    ])
+            //                    .toJSON(),
+            //            ],
+            //        },
+            //    };
+            //    this.interactions.push({
+            //        request: interaction,
+            //        response,
+            //        timestamp: Date.now(),
+            //    });
+            //    return response;
+            //}
         }
+
 
         if (
             interaction.type === InteractionType.MessageComponent &&
@@ -440,6 +429,26 @@ export class AllowListController extends BaseDiscordActionController {
             });
             return response;
         }
+        if (
+            interaction.type === InteractionType.MessageComponent &&
+            interaction.data.custom_id === 'list:select:project'
+        ) {
+            // Get the selected project from the interaction data
+            const selectedProject = interaction.data;
+
+            // TODO: Handle the selected project here and generate the response
+
+            // Example response
+            const response: APIInteractionResponse = {
+                type: InteractionResponseType.ChannelMessageWithSource,
+                data: {
+                    flags: MessageFlags.Ephemeral,
+                    content: `You selected project: ${selectedProject}`,
+                },
+            };
+
+            return response;
+        }
     }
 
     private renderInteractionData(
@@ -491,6 +500,12 @@ export class AllowListController extends BaseDiscordActionController {
      * @returns
      */
     private getApplicationCommands(): ApplicationCommandSpec[] {
+        //const selectMenuOptions = this.storeProjects.map((project) => { THIS VERSION IS FOR IF WE WANT THE MENU IN THE SLASH COMMAND
+        //    return {
+        //        name: project.projectID,
+        //        value: project.apiKey,
+        //    };
+        //});
         const commands: ApplicationCommandSpec[] = [
             // `/poll-action` slash command
             {
@@ -499,6 +514,7 @@ export class AllowListController extends BaseDiscordActionController {
                     shortName: 'allow-list',
                     supportedEnvs: ['list', 'qa', 'staging'],
                 },
+
                 type: ApplicationCommandType.ChatInput,
                 name: 'list',
                 description: 'List command',
@@ -533,6 +549,15 @@ export class AllowListController extends BaseDiscordActionController {
                         type: ApplicationCommandOptionType.Subcommand,
                         name: 'status',
                         description: 'list status',
+                        //options: [   THIS VERSION IS FOR IF WE WANT THE MENU IN THE SLASH COMMAND
+                        //    {
+                        //        type: ApplicationCommandOptionType.String,
+                        //        name: 'project',
+                        //        description: 'Select a project',
+                        //        required: true,
+                        //        choices: selectMenuOptions,
+                        //    },
+                        //],
                     },
                 ],
             },
