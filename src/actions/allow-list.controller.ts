@@ -187,11 +187,19 @@ export class AllowListController extends BaseDiscordActionController {
 
                 // Adds inputted project ID into the array based on user input
 
-                if (this.projectID && this.apiKey) {
-                    console.log(this.projectID);
-                    this.storeProjects.push(this.apiKey);
-                }
+                const recordData = {
+                    'Name': "test",
+                    'Proj ID': this.projectID,
+                    'API key': this.apiKey,
+                };
 
+                try {
+                    // Call the createRecord method of AirtableAPI to save the data
+                    await airtable.createRecord(recordData);
+                    console.log('Record created successfully');
+                } catch (error) {
+                    console.error('Error creating record:', error);
+                }
 
                 const response: APIInteractionResponse = {
                     type: InteractionResponseType.ChannelMessageWithSource,
