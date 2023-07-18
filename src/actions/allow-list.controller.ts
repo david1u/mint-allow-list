@@ -116,6 +116,7 @@ export class AllowListController extends BaseDiscordActionController {
              * Discord guild upon installation.
              */
             applicationCommands: this.getApplicationCommands(),
+            requiredContext: ['isAdmin', 'gmPassAddress', 'guildName'],
         };
         return metadata;
     }
