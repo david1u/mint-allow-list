@@ -1,4 +1,9 @@
-import {getFetch, handleFetchResponse} from '@collabland/common';
+// Copyright Abridged, Inc. 2023. All Rights Reserved.
+// Node module: @collabland/allow-list-action
+// This file is licensed under the MIT License.
+// License text available at https://opensource.org/licenses/MIT
+
+import { getFetch, handleFetchResponse } from '@collabland/common';
 
 type responseAPI = {
   data: Array<{
@@ -11,27 +16,27 @@ type responseAPI = {
 type GetEntryStatusAPI = {
   data: {
     status:
-      | 'submitted'
-      | 'selected'
-      | 'waitlisted'
-      | 'not_selected'
-      | 'disqualified';
+    | 'submitted'
+    | 'selected'
+    | 'waitlisted'
+    | 'not_selected'
+    | 'disqualified';
   };
 };
 type GetEntryAPI = {
   data: {
     address: string;
     status:
-      | 'submitted'
-      | 'selected'
-      | 'waitlisted'
-      | 'not_selected'
-      | 'disqualified';
+    | 'submitted'
+    | 'selected'
+    | 'waitlisted'
+    | 'not_selected'
+    | 'disqualified';
     tentativeStatus:
-      | 'selected'
-      | 'waitlisted'
-      | 'not_selected'
-      | 'disqualified';
+    | 'selected'
+    | 'waitlisted'
+    | 'not_selected'
+    | 'disqualified';
     attestationData: Record<string, string | boolean> | null;
   };
 };
@@ -39,16 +44,16 @@ type GetEntryResponseAPI = {
   data: {
     address: string;
     status:
-      | 'submitted'
-      | 'selected'
-      | 'waitlisted'
-      | 'not_selected'
-      | 'disqualified';
+    | 'submitted'
+    | 'selected'
+    | 'waitlisted'
+    | 'not_selected'
+    | 'disqualified';
     tentativeStatus:
-      | 'selected'
-      | 'waitlisted'
-      | 'not_selected'
-      | 'disqualified';
+    | 'selected'
+    | 'waitlisted'
+    | 'not_selected'
+    | 'disqualified';
     attestationData: Record<string, string | boolean> | null;
   };
 };
@@ -62,7 +67,7 @@ type GetProofAPIResponse = {
 
 export class ListAPI {
   private fetch = getFetch({
-    headers: {'api-key': 'spsk_9U84OvT1ReIc8r0XP3nPZQsUEwYVnDtCMdtWajfI'}, //might need user to submit their own API key as well
+    headers: { 'api-key': 'spsk_9U84OvT1ReIc8r0XP3nPZQsUEwYVnDtCMdtWajfI' }, //might need user to submit their own API key as well
   });
 
   async createAttestationSchema(projectID: string, apiKey: string) {
@@ -129,7 +134,7 @@ export class ListAPI {
     const response = await this.fetch(
       `https://api.spearmint.xyz/projects/${projectID}/proofs/${address}`,
       {
-        headers: {authorization: `Bearer ${apiKey}`},
+        headers: { authorization: `Bearer ${apiKey}` },
 
         method: 'get',
       },
@@ -142,7 +147,7 @@ export class ListAPI {
     const response = await this.fetch(
       `https://api.spearmint.xyz/projects/${projectID}/entries/${address}/status`,
       {
-        headers: {authorization: `Bearer ${apiKey}`},
+        headers: { authorization: `Bearer ${apiKey}` },
         method: 'get',
       },
     );
@@ -154,7 +159,7 @@ export class ListAPI {
     const response = await this.fetch(
       `https://api.spearmint.xyz/projects/${projectID}/entries/${address}`,
       {
-        headers: {authorization: `Bearer ${apiKey}`},
+        headers: { authorization: `Bearer ${apiKey}` },
         method: 'get',
       },
     );
@@ -163,4 +168,4 @@ export class ListAPI {
   }
 }
 
-async function main() {}
+async function main() { }
