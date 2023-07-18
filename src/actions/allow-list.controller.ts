@@ -23,6 +23,7 @@ import { api, get, param } from '@loopback/rest';
 import {
     APIChatInputApplicationCommandInteraction,
     APIInteraction,
+    APIMessageStringSelectInteractionData,
     ActionRowBuilder,
     ApplicationCommandOptionType,
     ButtonBuilder,
@@ -160,6 +161,7 @@ export class AllowListController extends BaseDiscordActionController {
 
         const airtable = new AirtableAPI();
         const listApi = new ListAPI();
+        const records = await airtable.getRecords()
         if (
             interaction.type === InteractionType.ApplicationCommand
         ) {
@@ -233,10 +235,10 @@ export class AllowListController extends BaseDiscordActionController {
 
             if (args.status) {
                 //const selectedProject = args.status[0].options[0].value;
-                const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
-                const projectOptions = await this.getProjectOptions();
-                console.log(projectOptions);
-                console.log(this.storeProjects);
+                const projectOptions: StringSelectMenuOptionBuilder[] = records.map((record: any) => {
+                    const name = record.fields['Name'];
+                    return new StringSelectMenuOptionBuilder().setLabel(name).setValue(name);
+                });
 
                 const selectMenu = new StringSelectMenuBuilder()
                     .setCustomId('list:select:project')
@@ -247,12 +249,13 @@ export class AllowListController extends BaseDiscordActionController {
 
                 const actionRow = new ActionRowBuilder<MessageActionRowComponentBuilder>()
                     .addComponents(selectMenu);
+
                 const response: APIInteractionResponse = {
                     type: InteractionResponseType.ChannelMessageWithSource,
                     data: {
                         flags: MessageFlags.Ephemeral,
                         content: 'Please select a project:',
-                        components: [actionRow.toJSON()],
+                        components: [actionRow.toJSON()]
                     },
                 };
 
@@ -264,37 +267,6 @@ export class AllowListController extends BaseDiscordActionController {
 
                 return response;
             }
-            //{
-            //    const entryStatus = await listApi.getEntryStatus(projectID, apiKey, address);
-            //    const response: APIInteractionResponse = {
-            //        type: InteractionResponseType.ChannelMessageWithSource,
-            //        data: {
-            //            flags: MessageFlags.Ephemeral,
-            //            embeds: [
-            //                new EmbedBuilder()
-            //                    .setTitle('AllowList Status')
-            //                    .setDescription(`Your current status is: ${entryStatus.data.status}`)
-            //                    .toJSON(),
-            //            ],
-            //            components: [
-            //                new ActionRowBuilder<MessageActionRowComponentBuilder>()
-            //                    .addComponents([
-            //                        new ButtonBuilder()
-            //                            .setLabel('leave')
-            //                            .setCustomId('list:button:leave')
-            //                            .setStyle(ButtonStyle.Danger),
-            //                    ])
-            //                    .toJSON(),
-            //            ],
-            //        },
-            //    };
-            //    this.interactions.push({
-            //        request: interaction,
-            //        response,
-            //        timestamp: Date.now(),
-            //    });
-            //    return response;
-            //}
         }
 
 
@@ -443,20 +415,48 @@ export class AllowListController extends BaseDiscordActionController {
             interaction.data.custom_id === 'list:select:project'
         ) {
             // Get the selected project from the interaction data
-            const selectedProject = interaction.data;
+            const interactionData = interaction.data as APIMessageStringSelectInteractionData;
+            if (interactionData.values) {
+                const selectedProject = interactionData.values[0];
+                console.log(selectedProject);
+                // Find the corresponding record based on the selected project name
+                const selectedRecord = records.find(
+                    (record: any) => record.fields['Name'] === selectedProject
+                );
+                console.log(selectedRecord);
+                // Check if a matching record is found
+                if (selectedRecord) {
+                    // Save the corresponding IDs
+                    const projectIDTable = selectedRecord.fields['Proj ID'];
+                    const apiKeyTable = selectedRecord.fields['API key'];
 
-            // TODO: Handle the selected project here and generate the response
+                    const entryStatus = await listApi.getEntryStatus(projectIDTable, apiKeyTable, address);
+                    const response: APIInteractionResponse = {
+                        type: InteractionResponseType.ChannelMessageWithSource,
+                        data: {
+                            flags: MessageFlags.Ephemeral,
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle(`${selectedProject} AllowList Status`)
+                                    .setDescription(entryStatus.data.status)
+                                    .toJSON(),
+                            ],
+                            components: [
+                                new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                                    .addComponents([
+                                        new ButtonBuilder()
+                                            .setLabel('leave')
+                                            .setCustomId('list:button:leave')
+                                            .setStyle(ButtonStyle.Danger),
+                                    ])
+                                    .toJSON(),
+                            ],
+                        },
+                    };
 
-            // Example response
-            const response: APIInteractionResponse = {
-                type: InteractionResponseType.ChannelMessageWithSource,
-                data: {
-                    flags: MessageFlags.Ephemeral,
-                    content: `You selected project: ${selectedProject}`,
-                },
-            };
-
-            return response;
+                    return response;
+                }
+            }
         }
     }
 
