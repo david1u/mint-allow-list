@@ -1,7 +1,7 @@
 {
-  "name": "@collabland/example-poll-action",
+  "name": "@collabland/allow-list-action",
   "version": "0.0.1",
-  "description": "CollabLand Poll action",
+  "description": "CollabLand AllowList action",
   "keywords": [
     "CollabLand",
     "Collab.Land",
@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:abridged/collabland-poll-action.git"
+    "url": "git@github.com:david1u/mint-allow-list.git"
   },
   "publishConfig": {
     "access": "public"
@@ -45,19 +45,16 @@
     "@collabland/models": "^0.27.0",
     "@loopback/core": "^5.1.1",
     "@loopback/rest": "^13.1.1",
-    "@types/axios": "^0.14.0",
-    "api": "^6.0.0",
-    "axios": "^1.4.0",
-    "discord-api-types": "^0.37.48",
+    "discord-api-types": "^0.37.49",
     "discord.js": "^14.11.0",
     "tslib": "^2.0.0"
   },
   "devDependencies": {
-    "@loopback/build": "^10.1.0",
-    "@loopback/eslint-config": "^14.0.1",
-    "@loopback/testlab": "^6.1.0",
+    "@loopback/build": "^10.1.1",
+    "@loopback/eslint-config": "^14.0.2",
+    "@loopback/testlab": "^6.1.1",
     "@types/jquery": "^3.5.16",
-    "@types/node": "^20.4.1",
+    "@types/node": "^20.4.2",
     "typescript": "~5.1.6"
   },
   "copyright.owner": "Abridged, Inc.",

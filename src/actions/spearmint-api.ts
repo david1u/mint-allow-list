@@ -1,3 +1,8 @@
+// Copyright Abridged, Inc. 2023. All Rights Reserved.
+// Node module: @collabland/allow-list-action
+// This file is licensed under the MIT License.
+// License text available at https://opensource.org/licenses/MIT
+
 import {getFetch, handleFetchResponse} from '@collabland/common';
 
 type responseAPI = {
