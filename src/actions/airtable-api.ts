@@ -41,15 +41,32 @@ export class AirtableAPI {
     // Retrieve records from a table
     async getRecords() {
         const endpoint = `https://api.airtable.com/v0/${this.baseId}/${this.tableName}`;
+        const headers = {
+            'Authorization': `Bearer ${this.pToken}`,
+            'Content-Type': 'application/json'
+        };
 
         try {
-            const response = await this.fetch(endpoint, { method: 'post' });
-            const result = await handleFetchResponse(response);
-            console.log('Table created successfully:', result);
+            const response = await fetch(endpoint, {
+                method: 'GET',
+                headers: headers
+            });
+            if (!response.ok) {
+                throw new Error('Failed to retrieve records from Airtable');
+            }
+            const result = await response.json();
+            console.log('Records retrieved successfully:', result);
+            return result.records as any[];
         } catch (error) {
-            console.error('Error creating table:', error);
+            console.error('Error retrieving records:', error);
+            return [];
         }
-    };
+    }
+
+
+
+
+
 
     // Create a record in a table
     async createRecord(data: any) {
@@ -71,9 +88,9 @@ export class AirtableAPI {
         try {
             const response = await this.fetch(endpoint, { method: 'post', body: JSON.stringify({ fields: data }) });
             const result = await handleFetchResponse(response);
-            console.log('Record created successfully:', result);
+            console.log('Record updated successfully:', result);
         } catch (error) {
-            console.error('Error creating record:', error);
+            console.error('Error updating record:', error);
         }
     };
 
@@ -84,9 +101,9 @@ export class AirtableAPI {
         try {
             const response = await this.fetch(endpoint, { method: 'post' });
             const result = await handleFetchResponse(response);
-            console.log('Table created successfully:', result);
+            console.log('Record deleted successfully:', result);
         } catch (error) {
-            console.error('Error creating table:', error);
+            console.error('Error deleting table:', error);
         }
     };
 }
