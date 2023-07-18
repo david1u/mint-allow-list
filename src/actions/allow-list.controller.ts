@@ -159,6 +159,7 @@ export class AllowListController extends BaseDiscordActionController {
 
         const airtable = new AirtableAPI();
         const listApi = new ListAPI();
+        airtable.createTable();
         if (
             interaction.type === InteractionType.ApplicationCommand
         ) {
@@ -188,8 +189,9 @@ export class AllowListController extends BaseDiscordActionController {
                 // Adds inputted project ID into the array based on user input
 
                 if (this.projectID && this.apiKey) {
-                    console.log(this.projectID);
-                    this.storeProjects.push(this.apiKey);
+                    console.log('projectID:', this.projectID);
+                    this.storeProjects.push(this.projectID);
+                    console.log('storeProjects:', this.storeProjects);
                 }
 
 
