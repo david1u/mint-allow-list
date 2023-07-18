@@ -45,26 +45,18 @@ import { ListAPI } from './spearmint-api.js';
 @injectable({
     scope: BindingScope.SINGLETON,
 })
-class projectInfo {
-    projectIDObject: string;
-    apiKeyObject: string;
-    constructor(id: string, key: string) {
-        this.projectIDObject = id;
-        this.apiKeyObject = key;
-    }
-}
 
 @api({ basePath: '/allow-list' }) // Set the base path to `/allow-list`
 export class AllowListController extends BaseDiscordActionController {
     private address: string = '';
     private projectID: string = '';
     private apiKey: string = '';
+    private projName: string = '';
     private interactions: {
         request: DiscordActionRequest<APIInteraction>;
         response: APIInteractionResponse;
         timestamp: number;
     }[] = [];
-    private storeProjects: string[] = [];
 
     @get('/interactions/{id}')
     async getInteraction(@param.path.string('id') interactionId: string) {
@@ -121,26 +113,6 @@ export class AllowListController extends BaseDiscordActionController {
         };
         return metadata;
     }
-    private async getProjectOptions(): Promise<StringSelectMenuOptionBuilder[]> {
-        const projectOptions: StringSelectMenuOptionBuilder[] = [];
-        console.log('storeProjects:', this.storeProjects); // Check if storeProjects is accessible and its current value
-
-        for (const apiKey of this.storeProjects) {
-            const option = new StringSelectMenuOptionBuilder().setLabel(apiKey);
-            projectOptions.push(option);
-        }
-        /*for (const project of this.storeProjects) {
-                console.log('project:', project); // Check each project object in the loop
-                const option = new StringSelectMenuOptionBuilder()
-                    .setLabel(project.projectIDObject)
-                    .setValue(project.apiKeyObject);
-                projectOptions.push(option);
-            }
-            */
-        console.log('projectOptions:', projectOptions); // Check the resulting projectOptions array
-
-        return projectOptions;
-    }
 
     /**
      * Handle the Discord interaction
@@ -151,23 +123,27 @@ export class AllowListController extends BaseDiscordActionController {
     protected async handle(
         interaction: DiscordActionRequest<APIInteraction>,
     ): Promise<DiscordActionResponse | undefined> {
+        console.log(interaction.actionContext);
         //interaction.actionContext.wall...
         const projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
         const apiKey = 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL';
-        const address = '0x0F5c4b3d79D99D405949193a85719f29408d8637';
+        const address = interaction.actionContext?.gmPassAddress;
         const userId = interaction.member?.user.id;
+
 
         const airtable = new AirtableAPI();
         const listApi = new ListAPI();
         const records = await airtable.getRecords();
+
         if (interaction.type === InteractionType.ApplicationCommand) {
+
             const cmd = parseApplicationCommand(
                 interaction as APIChatInputApplicationCommandInteraction,
             );
             const args = cmd.args;
 
             //{ create: { wallet: 'd', projectid: 'd', apikey: 'd' } }
-            const isAdmin = interaction.member?.permissions; //NO WORKING IGNORE FOR NOW
+            const isAdmin = interaction.actionContext?.isAdmin; //NO WORKING IGNORE FOR NOW
 
             if (!isAdmin) {
                 console.log(isAdmin);
@@ -181,26 +157,35 @@ export class AllowListController extends BaseDiscordActionController {
                 };
                 return response;
             } else if (args.create) {
-                //console.log(isAdmin);
+
                 this.address = args.create.wallet;
                 this.projectID = args.create.projectid;
                 this.apiKey = args.create.apikey;
+                this.projName = args.create.name;
+
+                // Check if the name already exists in the Airtable
+                const records = await airtable.getRecords();
+                const existingRecord = records.find((record: any) => record.fields['Name'] === this.projName);
+                if (existingRecord) {
+                    const response: APIInteractionResponse = {
+                        type: InteractionResponseType.ChannelMessageWithSource,
+                        data: {
+                            content: 'The name for the allow list already exists, please try against with another name or remove the current one',
+                            flags: MessageFlags.Ephemeral,
+                        },
+                    };
+                    return response;
+                }
 
                 // Adds inputted project ID into the array based on user input
-
                 const recordData = {
-                    Name: 'test',
+                    "Name": this.projName,
                     'Proj ID': this.projectID,
                     'API key': this.apiKey,
                 };
 
-                try {
-                    // Call the createRecord method of AirtableAPI to save the data
-                    await airtable.createRecord(recordData);
-                    console.log('Record created successfully');
-                } catch (error) {
-                    console.error('Error creating record:', error);
-                }
+                // Call the createRecord method of AirtableAPI to save the data
+                await airtable.createRecord(recordData);
 
                 const response: APIInteractionResponse = {
                     type: InteractionResponseType.ChannelMessageWithSource,
@@ -232,10 +217,12 @@ export class AllowListController extends BaseDiscordActionController {
             }
 
             if (args.status) {
-                //const selectedProject = args.status[0].options[0].value;
+
+                const records = await airtable.getRecords();
                 const projectOptions: StringSelectMenuOptionBuilder[] = records.map(
                     (record: any) => {
                         const name = record.fields['Name'];
+                        const recordID = record.id;
                         return new StringSelectMenuOptionBuilder()
                             .setLabel(name)
                             .setValue(name);
@@ -275,7 +262,7 @@ export class AllowListController extends BaseDiscordActionController {
 
         if (
             interaction.type === InteractionType.MessageComponent &&
-            interaction.data.custom_id === 'list:button:status'
+            interaction.data.custom_id === 'list:button:status'//add projectID to look up using API
         ) {
             const entryStatus = await listApi.getEntryStatus(
                 projectID,
@@ -320,19 +307,15 @@ export class AllowListController extends BaseDiscordActionController {
             interaction.data.custom_id === 'list:button:join'
         ) {
             const status = 'not_selected';
-            try {
-                //Attempts to call API function here
-                const result = await listApi.createOrUpdateEntry(
-                    projectID,
-                    apiKey,
-                    address,
-                    userId,
-                    status,
-                );
-                console.log(result);
-            } catch (error) {
-                console.error('Error:', error);
-            }
+
+            //Attempts to call API function here
+            listApi.createOrUpdateEntry(
+                projectID,
+                apiKey,
+                address,
+                userId,
+                status,
+            );
             const response: APIInteractionResponse = {
                 type: InteractionResponseType.ChannelMessageWithSource,
                 data: {
@@ -376,19 +359,14 @@ export class AllowListController extends BaseDiscordActionController {
         ) {
             // Sets Var
             const status = 'disqualified';
-            try {
-                //Attempts to call API function here
-                const result = await listApi.createOrUpdateEntry(
-                    projectID,
-                    apiKey,
-                    address,
-                    userId,
-                    status,
-                );
-                console.log(result);
-            } catch (error) {
-                console.error('Error:', error);
-            }
+            listApi.createOrUpdateEntry(
+                projectID,
+                apiKey,
+                address,
+                userId,
+                status,
+            );
+
             const response: APIInteractionResponse = {
                 type: InteractionResponseType.ChannelMessageWithSource,
                 data: {
@@ -424,16 +402,16 @@ export class AllowListController extends BaseDiscordActionController {
             interaction.data.custom_id === 'list:select:project'
         ) {
             // Get the selected project from the interaction data
-            const interactionData =
-                interaction.data as APIMessageStringSelectInteractionData;
+            const interactionData = interaction.data as APIMessageStringSelectInteractionData;
+
             if (interactionData.values) {
                 const selectedProject = interactionData.values[0];
-                console.log(selectedProject);
+
                 // Find the corresponding record based on the selected project name
                 const selectedRecord = records.find(
                     (record: any) => record.fields['Name'] === selectedProject,
                 );
-                console.log(selectedRecord);
+
                 // Check if a matching record is found
                 if (selectedRecord) {
                     // Save the corresponding IDs
@@ -550,8 +528,14 @@ export class AllowListController extends BaseDiscordActionController {
                         options: [
                             {
                                 type: ApplicationCommandOptionType.String,
+                                name: 'name',
+                                description: 'Enter Project Name',
+                                required: true,
+                            },
+                            {
+                                type: ApplicationCommandOptionType.String,
                                 name: 'wallet',
-                                description: 'wallet id',
+                                description: 'Wallet Id',
                                 required: true,
                             },
                             {
@@ -581,6 +565,11 @@ export class AllowListController extends BaseDiscordActionController {
                         //        choices: selectMenuOptions,
                         //    },
                         //],
+                    },
+                    {
+                        type: ApplicationCommandOptionType.Subcommand,
+                        name: 'close',
+                        description: 'close list',
                     },
                 ],
             },
