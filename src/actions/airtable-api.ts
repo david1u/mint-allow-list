@@ -8,7 +8,6 @@ import { getFetch, handleFetchResponse } from '@collabland/common';
 export class AirtableAPI {
 
     private pToken = 'patWO6UMOxAld43uD.945260094b1fd37858a02c909977c2698420af0e4acbcf632677619909bb4e87'; //getEnvVar('AIRTABLE_ACCESS_TOKEN');
-
     private baseId = 'appJFQ6xdXqbJCmoN';
     private tableName = 'tblEzMUXEKUMR0iBA';
 
@@ -26,7 +25,8 @@ export class AirtableAPI {
         const fields = [
             { name: 'Allow List Name', type: 'text' },
             { name: 'Proj-ID', type: 'text' },
-            { name: 'APIKey', type: 'text' },
+            { name: 'API-Key', type: 'text' },
+            { name: 'Status', type: 'singleSelect', options: ['open', 'closed'] },
         ];
 
         const tableData = {
@@ -93,7 +93,7 @@ export class AirtableAPI {
 
         try {
             const response = await this.fetch(endpoint, {
-                method: 'post',
+                method: 'patch',
                 body: JSON.stringify({ fields: data }),
             });
             const result = await handleFetchResponse(response);
