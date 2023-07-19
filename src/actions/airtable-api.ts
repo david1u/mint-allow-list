@@ -3,12 +3,12 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import { getEnvVar, getFetch, handleFetchResponse } from '@collabland/common';
+import { getFetch, handleFetchResponse } from '@collabland/common';
 
 export class AirtableAPI {
 
-    private pToken = getEnvVar('AIRTABLE_ACCESS_TOKEN');
-    //'patWO6UMOxAld43uD.945260094b1fd37858a02c909977c2698420af0e4acbcf632677619909bb4e87';
+    private pToken = 'patWO6UMOxAld43uD.945260094b1fd37858a02c909977c2698420af0e4acbcf632677619909bb4e87'; //getEnvVar('AIRTABLE_ACCESS_TOKEN');
+
     private baseId = 'appJFQ6xdXqbJCmoN';
     private tableName = 'tblEzMUXEKUMR0iBA';
 
