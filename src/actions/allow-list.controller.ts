@@ -109,7 +109,7 @@ export class AllowListController extends BaseDiscordActionController {
              * Discord guild upon installation.
              */
             applicationCommands: this.getApplicationCommands(),
-            requiredContext: ['isAdmin', 'gmPassAddress', 'guildName'],
+            requiredContext: ['isCommunityAdmin', 'gmPassAddress', 'guildName'],
         };
         return metadata;
     }
@@ -143,7 +143,7 @@ export class AllowListController extends BaseDiscordActionController {
             const args = cmd.args;
 
             //{ create: { wallet: 'd', projectid: 'd', apikey: 'd' } }
-            const isAdmin = interaction.actionContext?.isAdmin; //NO WORKING IGNORE FOR NOW
+            const isAdmin = interaction.actionContext?.isCommunityAdmin; //NO WORKING IGNORE FOR NOW
 
             if (!isAdmin) {
                 console.log(isAdmin);
@@ -156,12 +156,12 @@ export class AllowListController extends BaseDiscordActionController {
                     },
                 };
                 return response;
-            } else if (args.create) {
+            } else if (args.initialize) {
 
-                this.address = args.create.wallet;
-                this.projectID = args.create.projectid;
-                this.apiKey = args.create.apikey;
-                this.projName = args.create.name;
+                this.address = address;
+                this.projectID = args.initialize.projectid;
+                this.apiKey = args.initialize.apikey;
+                this.projName = args.initialize.name;
 
                 // Check if the name already exists in the Airtable
                 const records = await airtable.getRecords();
@@ -258,6 +258,16 @@ export class AllowListController extends BaseDiscordActionController {
 
                 return response;
             }
+            if (args.create) {
+                const response: APIInteractionResponse = {
+                    type: InteractionResponseType.ChannelMessageWithSource,
+                    data: {
+                        content: '1. Create an account on https://spearmint.xyz/\n2. Follow the instructions on https://docs.spearmint.xyz/docs/create-a-project to create your project \n3. Retrieve the project ID, and API key under the Developers tab \n4. Use \'/list initialize\' and input info to initialize the project into discord \nRead more about the allow list miniapp at [insert link]',
+                        flags: MessageFlags.Ephemeral,
+                    },
+                };
+                return response;
+            }
         }
 
         if (
@@ -284,7 +294,7 @@ export class AllowListController extends BaseDiscordActionController {
                             new ActionRowBuilder<MessageActionRowComponentBuilder>()
                                 .addComponents([
                                     new ButtonBuilder()
-                                        .setLabel('leave')
+                                        .setLabel('Leave')
                                         .setCustomId('list:button:leave')
                                         .setStyle(ButtonStyle.Danger),
                                 ])
@@ -330,13 +340,13 @@ export class AllowListController extends BaseDiscordActionController {
                         new ActionRowBuilder<MessageActionRowComponentBuilder>()
                             .addComponents([
                                 new ButtonBuilder()
-                                    .setLabel('status')
+                                    .setLabel('Status')
                                     .setCustomId('list:button:status')
                                     .setStyle(ButtonStyle.Primary),
                             ])
                             .addComponents([
                                 new ButtonBuilder()
-                                    .setLabel('leave')
+                                    .setLabel('Leave')
                                     .setCustomId('list:button:leave')
                                     .setStyle(ButtonStyle.Danger),
                             ])
@@ -382,7 +392,7 @@ export class AllowListController extends BaseDiscordActionController {
 
                             .addComponents([
                                 new ButtonBuilder()
-                                    .setLabel('join')
+                                    .setLabel('Join')
                                     .setCustomId('list:button:join')
                                     .setStyle(ButtonStyle.Success),
                             ])
@@ -523,7 +533,7 @@ export class AllowListController extends BaseDiscordActionController {
                     // Subcommand: /list create
                     {
                         type: ApplicationCommandOptionType.Subcommand,
-                        name: 'create',
+                        name: 'initialize',
                         description: 'Create new list',
                         options: [
                             {
@@ -532,12 +542,13 @@ export class AllowListController extends BaseDiscordActionController {
                                 description: 'Enter Project Name',
                                 required: true,
                             },
-                            {
+                            /*{
                                 type: ApplicationCommandOptionType.String,
                                 name: 'wallet',
                                 description: 'Wallet Id',
                                 required: true,
                             },
+                            */
                             {
                                 type: ApplicationCommandOptionType.String,
                                 name: 'projectid',
@@ -570,6 +581,12 @@ export class AllowListController extends BaseDiscordActionController {
                         type: ApplicationCommandOptionType.Subcommand,
                         name: 'close',
                         description: 'close list',
+                    },
+
+                    {
+                        type: ApplicationCommandOptionType.Subcommand,
+                        name: 'create',
+                        description: 'Create your allowlist on the spearmint website',
                     },
                 ],
             },
