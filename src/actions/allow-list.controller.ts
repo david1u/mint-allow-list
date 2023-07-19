@@ -123,8 +123,7 @@ export class AllowListController extends BaseDiscordActionController {
     protected async handle(
         interaction: DiscordActionRequest<APIInteraction>,
     ): Promise<DiscordActionResponse | undefined> {
-        console.log(interaction.actionContext);
-        //interaction.actionContext.wall...
+
         const projectID = '3fd819d8-8bd5-4d5b-a3b4-ae4820b58bf4';
         const apiKey = 'spsk_PiosaAbiHXn5I1paVlREGP5WfQZ5IleAzwBkSdtL';
         const address = interaction.actionContext?.gmPassAddress;
@@ -140,14 +139,12 @@ export class AllowListController extends BaseDiscordActionController {
             const cmd = parseApplicationCommand(
                 interaction as APIChatInputApplicationCommandInteraction,
             );
+
             const args = cmd.args;
+            const isAdmin = interaction.actionContext?.isCommunityAdmin;
+            const guildName = interaction.actionContext?.guildName;
 
-            //{ create: { wallet: 'd', projectid: 'd', apikey: 'd' } }
-            const isAdmin = interaction.actionContext?.isCommunityAdmin; //NO WORKING IGNORE FOR NOW
-
-            if (!isAdmin) {
-                console.log(isAdmin);
-                // User is not an admin, handle the access denied case
+            if (!isAdmin && args.initialize) {
                 const response: APIInteractionResponse = {
                     type: InteractionResponseType.ChannelMessageWithSource,
                     data: {
@@ -166,6 +163,7 @@ export class AllowListController extends BaseDiscordActionController {
                 // Check if the name already exists in the Airtable
                 const records = await airtable.getRecords();
                 const existingRecord = records.find((record: any) => record.fields['Name'] === this.projName);
+
                 if (existingRecord) {
                     const response: APIInteractionResponse = {
                         type: InteractionResponseType.ChannelMessageWithSource,
@@ -178,10 +176,14 @@ export class AllowListController extends BaseDiscordActionController {
                 }
 
                 // Adds inputted project ID into the array based on user input
+                const currentDate = new Date();
                 const recordData = {
-                    "Name": this.projName,
+                    'Name': this.projName,
                     'Proj ID': this.projectID,
                     'API key': this.apiKey,
+                    'status': 'open',
+                    'server name': guildName,
+                    'creation date': currentDate.toISOString()
                 };
 
                 // Call the createRecord method of AirtableAPI to save the data
@@ -216,46 +218,85 @@ export class AllowListController extends BaseDiscordActionController {
                 return response;
             }
 
-            if (args.status) {
+            if (args.status || (args.close && isAdmin)) {
 
                 const records = await airtable.getRecords();
                 const projectOptions: StringSelectMenuOptionBuilder[] = records.map(
                     (record: any) => {
                         const name = record.fields['Name'];
-                        const recordID = record.id;
+                        //const recordID = record.id;
                         return new StringSelectMenuOptionBuilder()
                             .setLabel(name)
                             .setValue(name);
                     },
                 );
+                if (args.status) {
+                    const selectMenu = new StringSelectMenuBuilder()
+                        .setCustomId('list:select:pstatus')
+                        .setPlaceholder('Select a project')
+                        .setMinValues(1)
+                        .setMaxValues(1)
+                        .addOptions(projectOptions);
 
-                const selectMenu = new StringSelectMenuBuilder()
-                    .setCustomId('list:select:project')
-                    .setPlaceholder('Select a project')
-                    .setMinValues(1)
-                    .setMaxValues(1)
-                    .addOptions(projectOptions);
+                    const actionRow =
+                        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+                            selectMenu,
+                        );
 
-                const actionRow =
-                    new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-                        selectMenu,
-                    );
+                    const response: APIInteractionResponse = {
+                        type: InteractionResponseType.ChannelMessageWithSource,
+                        data: {
+                            flags: MessageFlags.Ephemeral,
+                            content: 'Please select a project to check the status of:',
+                            components: [actionRow.toJSON()],
+                        },
+                    };
 
+                    this.interactions.push({
+                        request: interaction,
+                        response,
+                        timestamp: Date.now(),
+                    });
+                    return response;
+                }
+                if (args.close) {
+                    const selectMenu = new StringSelectMenuBuilder()
+                        .setCustomId('list:select:pclose')
+                        .setPlaceholder('Select a project')
+                        .setMinValues(1)
+                        .setMaxValues(1)
+                        .addOptions(projectOptions);
+
+                    const actionRow =
+                        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+                            selectMenu,
+                        );
+
+                    const response: APIInteractionResponse = {
+                        type: InteractionResponseType.ChannelMessageWithSource,
+                        data: {
+                            flags: MessageFlags.Ephemeral,
+                            content: 'Please select a project to close:',
+                            components: [actionRow.toJSON()],
+                        },
+                    };
+
+                    this.interactions.push({
+                        request: interaction,
+                        response,
+                        timestamp: Date.now(),
+                    });
+
+                    return response;
+                }
+            } else if (!isAdmin && args.close) {
                 const response: APIInteractionResponse = {
                     type: InteractionResponseType.ChannelMessageWithSource,
                     data: {
+                        content: 'This command is only accessible to administrators.',
                         flags: MessageFlags.Ephemeral,
-                        content: 'Please select a project:',
-                        components: [actionRow.toJSON()],
                     },
                 };
-
-                this.interactions.push({
-                    request: interaction,
-                    response,
-                    timestamp: Date.now(),
-                });
-
                 return response;
             }
             if (args.create) {
@@ -272,42 +313,70 @@ export class AllowListController extends BaseDiscordActionController {
 
         if (
             interaction.type === InteractionType.MessageComponent &&
-            interaction.data.custom_id === 'list:button:status'//add projectID to look up using API
+            ((interaction.data.custom_id === ('list:select:pstatus')) || (interaction.data.custom_id === ('list:select:pclose')))
         ) {
-            const entryStatus = await listApi.getEntryStatus(
-                projectID,
-                apiKey,
-                address,
-            );
-            {
-                const response: APIInteractionResponse = {
-                    type: InteractionResponseType.ChannelMessageWithSource,
-                    data: {
-                        flags: MessageFlags.Ephemeral,
-                        embeds: [
-                            new EmbedBuilder()
-                                .setTitle('AllowList Status')
-                                .setDescription(entryStatus.data.status)
-                                .toJSON(),
-                        ],
-                        components: [
-                            new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                                .addComponents([
-                                    new ButtonBuilder()
-                                        .setLabel('Leave')
-                                        .setCustomId('list:button:leave')
-                                        .setStyle(ButtonStyle.Danger),
-                                ])
-                                .toJSON(),
-                        ],
-                    },
-                };
-                this.interactions.push({
-                    request: interaction,
-                    response,
-                    timestamp: Date.now(),
-                });
-                return response;
+            // Get the selected project from the interaction data
+            const interactionData = interaction.data as APIMessageStringSelectInteractionData;
+
+            if (interactionData.values) {
+                const selectedProject = interactionData.values[0];
+
+                // Find the corresponding record based on the selected project name
+                const selectedRecord = records.find(
+                    (record: any) => record.fields['Name'] === selectedProject,
+                );
+
+                // Check if a matching record is found
+                if (selectedRecord) {
+                    // Save the corresponding IDs
+                    const projectIDTable = selectedRecord.fields['Proj ID'];
+                    const apiKeyTable = selectedRecord.fields['API key'];
+                    const projectStatusTable = selectedRecord.fields['status'];
+                    const recordID = selectedRecord.id;
+
+                    if (interaction.data.custom_id === ('list:select:pstatus')) {
+                        const entryStatus = await listApi.getEntryStatus(
+                            projectIDTable,
+                            apiKeyTable,
+                            address,
+                        );
+                        const response: APIInteractionResponse = {
+                            type: InteractionResponseType.ChannelMessageWithSource,
+                            data: {
+                                flags: MessageFlags.Ephemeral,
+                                embeds: [
+                                    new EmbedBuilder()
+                                        .setTitle(`${selectedProject} AllowList Status`)
+                                        .setDescription(`${entryStatus.data.status} and the list is ${projectStatusTable}`)
+                                        .toJSON(),
+                                ],
+                                components: [
+                                    new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                                        .addComponents([
+                                            new ButtonBuilder()
+                                                .setLabel('leave')
+                                                .setCustomId('list:button:leave')
+                                                .setStyle(ButtonStyle.Danger),
+                                        ])
+                                        .toJSON(),
+                                ],
+                            },
+                        };
+                        return response;
+                    } else if (interaction.data.custom_id === ('list:select:pclose')) {
+
+                        airtable.updateRecord(recordID, { 'status': 'closed' });
+
+                        const response: APIInteractionResponse = {
+                            type: InteractionResponseType.ChannelMessageWithSource,
+                            data: {
+                                content: `Allow List ${selectedProject} has been closed`,
+                            },
+                        };
+                        return response;
+
+                    }
+                }
             }
         }
 
@@ -363,6 +432,47 @@ export class AllowListController extends BaseDiscordActionController {
         }
 
         if (
+            interaction.type === InteractionType.MessageComponent &&
+            interaction.data.custom_id === 'list:button:status'//add projectID to look up using API
+        ) {
+            const entryStatus = await listApi.getEntryStatus(
+                projectID,
+                apiKey,
+                address,
+            );
+            {
+                const response: APIInteractionResponse = {
+                    type: InteractionResponseType.ChannelMessageWithSource,
+                    data: {
+                        flags: MessageFlags.Ephemeral,
+                        embeds: [
+                            new EmbedBuilder()
+                                .setTitle('AllowList Status')
+                                .setDescription(entryStatus.data.status)
+                                .toJSON(),
+                        ],
+                        components: [
+                            new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                                .addComponents([
+                                    new ButtonBuilder()
+                                        .setLabel('Leave')
+                                        .setCustomId('list:button:leave')
+                                        .setStyle(ButtonStyle.Danger),
+                                ])
+                                .toJSON(),
+                        ],
+                    },
+                };
+                this.interactions.push({
+                    request: interaction,
+                    response,
+                    timestamp: Date.now(),
+                });
+                return response;
+            }
+        }
+
+        if (
             //Checks if leave button is clicked?
             interaction.type === InteractionType.MessageComponent &&
             interaction.data.custom_id === 'list:button:leave'
@@ -406,59 +516,6 @@ export class AllowListController extends BaseDiscordActionController {
                 timestamp: Date.now(),
             });
             return response;
-        }
-        if (
-            interaction.type === InteractionType.MessageComponent &&
-            interaction.data.custom_id === 'list:select:project'
-        ) {
-            // Get the selected project from the interaction data
-            const interactionData = interaction.data as APIMessageStringSelectInteractionData;
-
-            if (interactionData.values) {
-                const selectedProject = interactionData.values[0];
-
-                // Find the corresponding record based on the selected project name
-                const selectedRecord = records.find(
-                    (record: any) => record.fields['Name'] === selectedProject,
-                );
-
-                // Check if a matching record is found
-                if (selectedRecord) {
-                    // Save the corresponding IDs
-                    const projectIDTable = selectedRecord.fields['Proj ID'];
-                    const apiKeyTable = selectedRecord.fields['API key'];
-
-                    const entryStatus = await listApi.getEntryStatus(
-                        projectIDTable,
-                        apiKeyTable,
-                        address,
-                    );
-                    const response: APIInteractionResponse = {
-                        type: InteractionResponseType.ChannelMessageWithSource,
-                        data: {
-                            flags: MessageFlags.Ephemeral,
-                            embeds: [
-                                new EmbedBuilder()
-                                    .setTitle(`${selectedProject} AllowList Status`)
-                                    .setDescription(entryStatus.data.status)
-                                    .toJSON(),
-                            ],
-                            components: [
-                                new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                                    .addComponents([
-                                        new ButtonBuilder()
-                                            .setLabel('leave')
-                                            .setCustomId('list:button:leave')
-                                            .setStyle(ButtonStyle.Danger),
-                                    ])
-                                    .toJSON(),
-                            ],
-                        },
-                    };
-
-                    return response;
-                }
-            }
         }
     }
 
@@ -542,13 +599,6 @@ export class AllowListController extends BaseDiscordActionController {
                                 description: 'Enter Project Name',
                                 required: true,
                             },
-                            /*{
-                                type: ApplicationCommandOptionType.String,
-                                name: 'wallet',
-                                description: 'Wallet Id',
-                                required: true,
-                            },
-                            */
                             {
                                 type: ApplicationCommandOptionType.String,
                                 name: 'projectid',
@@ -582,7 +632,6 @@ export class AllowListController extends BaseDiscordActionController {
                         name: 'close',
                         description: 'close list',
                     },
-
                     {
                         type: ApplicationCommandOptionType.Subcommand,
                         name: 'create',
