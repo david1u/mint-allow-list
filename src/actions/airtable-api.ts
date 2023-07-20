@@ -46,6 +46,31 @@ export class AirtableAPI {
         }
     }
 
+    //get specific record
+    async getRecord(recordId: string) {
+        const endpoint = `https://api.airtable.com/v0/${this.baseId}/${this.tableName}/${recordId}`;
+        const headers = {
+            Authorization: `Bearer ${this.pToken}`,
+            'Content-Type': 'application/json',
+        };
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'GET',
+                headers: headers,
+            });
+            if (!response.ok) {
+                throw new Error('Failed to retrieve record from Airtable');
+            }
+            const result = await response.json();
+            console.log('Record retrieved successfully:', result);
+            return result;
+        } catch (error) {
+            console.error('Error retrieving record:', error);
+            return [];
+        }
+    }
+
     // Retrieve records from a table
     async getRecords() {
         const endpoint = `https://api.airtable.com/v0/${this.baseId}/${this.tableName}`;
