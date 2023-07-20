@@ -192,8 +192,8 @@ export class AllowListController extends BaseDiscordActionController {
                     data: {
                         embeds: [
                             new EmbedBuilder()
-                                .setTitle('Spearmint Allow List')
-                                .setDescription(this.describeInteraction(interaction))
+                                .setTitle(this.projName + ' Allow List')
+                                .setDescription('Join the ' + this.projName + ' allow list') //this.describeInteraction(interaction) used to be inside .setDescription()
                                 .toJSON(),
                         ],
                         components: [
@@ -286,7 +286,7 @@ export class AllowListController extends BaseDiscordActionController {
                         flags: MessageFlags.Ephemeral,
                         embeds: [
                             new EmbedBuilder()
-                                .setTitle('AllowList Status')
+                                .setTitle(this.projName + ' AllowList Status')
                                 .setDescription(entryStatus.data.status)
                                 .toJSON(),
                         ],
@@ -332,8 +332,8 @@ export class AllowListController extends BaseDiscordActionController {
                     flags: MessageFlags.Ephemeral,
                     embeds: [
                         new EmbedBuilder()
-                            .setTitle('Spearmint Allow List')
-                            .setDescription('You Have Been Entered')
+                            .setTitle(this.projName + ' Allow List')
+                            .setDescription('You have been entered to the ' + this.projName + ' allow list')
                             .toJSON(),
                     ],
                     components: [
@@ -383,8 +383,8 @@ export class AllowListController extends BaseDiscordActionController {
                     flags: MessageFlags.Ephemeral,
                     embeds: [
                         new EmbedBuilder()
-                            .setTitle('[Name of allow list]')
-                            .setDescription('you have left [Name of Allow List]')
+                            .setTitle(this.projName)
+                            .setDescription('You have left the allow list for ' + this.projName)
                             .toJSON(),
                     ],
                     components: [
