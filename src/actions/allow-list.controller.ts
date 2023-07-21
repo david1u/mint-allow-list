@@ -180,8 +180,8 @@ export class AllowListController extends BaseDiscordActionController {
                     data: {
                         embeds: [
                             new EmbedBuilder()
-                                .setTitle(`${projName} Allow List`)
-                                .setDescription('Click join the be a part of this Allow List!')
+                                .setTitle(`${projName} Allowlist`)
+                                .setDescription('Click join the be a part of this Allowlist!')
                                 .toJSON(),
                         ],
                         components: [
@@ -298,6 +298,7 @@ export class AllowListController extends BaseDiscordActionController {
                     const projectStatusTable = selectedRecord.fields['status'];
                     const recordID = selectedRecord.id;
                     var entryStatus;
+
                     if (interaction.data.custom_id === ('list:select:pstatus')) {
                         if (!isAdmin) {
                             try {
@@ -318,8 +319,8 @@ export class AllowListController extends BaseDiscordActionController {
                                     flags: MessageFlags.Ephemeral,
                                     embeds: [
                                         new EmbedBuilder()
-                                            .setTitle(`${selectedProject} AllowList Status`)
-                                            .setDescription(`${entryStatus.data.status} and the list is ${projectStatusTable}`)
+                                            .setTitle(`${selectedProject} Allowlist Status`)
+                                            .setDescription(`Status: ${entryStatus.data.status}\nThe list is ${projectStatusTable}`)
                                             .toJSON(),
                                     ],
                                     components: [
@@ -346,7 +347,7 @@ export class AllowListController extends BaseDiscordActionController {
                         const response: APIInteractionResponse = {
                             type: InteractionResponseType.ChannelMessageWithSource,
                             data: {
-                                content: `Allow List ${selectedProject} has been closed`,
+                                content: `Allowlist ${selectedProject} has been closed`,
                             },
                         };
                         return response;
@@ -368,8 +369,8 @@ export class AllowListController extends BaseDiscordActionController {
                                 flags: MessageFlags.Ephemeral,
                                 embeds: [
                                     new EmbedBuilder()
-                                        .setTitle(`${selectedProject} Allow List`)
-                                        .setDescription(`You have been entered to the ${selectedProject} Allow List`)
+                                        .setTitle(`${selectedProject} Allowlist`)
+                                        .setDescription(`You have been entered to the ${selectedProject} Allowlist`)
                                         .toJSON(),
                                 ],
                                 components: [
@@ -435,8 +436,8 @@ export class AllowListController extends BaseDiscordActionController {
                         flags: MessageFlags.Ephemeral,
                         embeds: [
                             new EmbedBuilder()
-                                .setTitle(`${listNameTable} Allow List`)
-                                .setDescription(`You have been entered to the ${listNameTable} Allow List`)
+                                .setTitle(`${listNameTable} Allowlist`)
+                                .setDescription(`You have been entered to the ${listNameTable} Allowlist`)
                                 .toJSON(),
                         ],
                         components: [
@@ -463,7 +464,7 @@ export class AllowListController extends BaseDiscordActionController {
                     timestamp: Date.now(),
                 });
                 return response;
-            } else if (customId.startsWith(`list:button:status:${entryId}`)) {
+            } else if (customId.startsWith('list:button:status')) {
                 const entryStatus = await listApi.getEntryStatus(
                     projectIDTable,
                     apiKeyTable,
@@ -476,7 +477,7 @@ export class AllowListController extends BaseDiscordActionController {
                             flags: MessageFlags.Ephemeral,
                             embeds: [
                                 new EmbedBuilder()
-                                    .setTitle(`${listNameTable} Allow List Status`)
+                                    .setTitle(`${listNameTable} Allowlist Status`)
                                     .setDescription(entryStatus.data.status)
                                     .toJSON(),
                             ],
@@ -597,7 +598,7 @@ export class AllowListController extends BaseDiscordActionController {
             // `/poll-action` slash command
             {
                 metadata: {
-                    name: 'AllowList',
+                    name: 'Allowlist',
                     shortName: 'allow-list',
                     supportedEnvs: ['list', 'qa', 'staging'],
                 },
