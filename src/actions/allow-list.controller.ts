@@ -125,6 +125,13 @@ export class AllowListController extends BaseDiscordActionController {
         const airtable = new AirtableAPI();
         const listApi = new ListAPI();
 
+        const accessDenied: APIInteractionResponse = { //create a variable that denies access, removes redundancy
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+                content: 'This command is only accessible to administrators.',
+                flags: MessageFlags.Ephemeral,
+            },
+        };
         if (interaction.type === InteractionType.ApplicationCommand) {
 
             const cmd = parseApplicationCommand(
@@ -136,14 +143,8 @@ export class AllowListController extends BaseDiscordActionController {
             const guildName = interaction.actionContext?.guildName;
 
             if (!isAdmin && args.initialize) {
-                const response: APIInteractionResponse = {
-                    type: InteractionResponseType.ChannelMessageWithSource,
-                    data: {
-                        content: 'This command is only accessible to administrators.',
-                        flags: MessageFlags.Ephemeral,
-                    },
-                };
-                return response;
+                return accessDenied;
+
             } else if (args.initialize) {
 
                 const projectID = args.initialize.projectid;
@@ -192,7 +193,7 @@ export class AllowListController extends BaseDiscordActionController {
                         embeds: [
                             new EmbedBuilder()
                                 .setTitle(`${projName} Allow List`)
-                                .setDescription('Click join the be apart of this Allow List!')
+                                .setDescription('Click join the be a part of this Allow List!')
                                 .toJSON(),
                         ],
                         components: [
@@ -215,7 +216,9 @@ export class AllowListController extends BaseDiscordActionController {
                 return response;
             }
 
-            if (args.status || (args.close && isAdmin)) {
+            if (args.status || (args.close) || args.join) { //these three commands all use a dropdown menu
+                var customid: string;
+                var content: string;
                 const records = await airtable.getRecords();
                 const projectOptions: StringSelectMenuOptionBuilder[] = records.map(
                     (record: any) => {
@@ -227,89 +230,72 @@ export class AllowListController extends BaseDiscordActionController {
                     },
                 );
                 if (args.status) {
-                    const selectMenu = new StringSelectMenuBuilder()
-                        .setCustomId('list:select:pstatus')
-                        .setPlaceholder('Select a project')
-                        .setMinValues(1)
-                        .setMaxValues(1)
-                        .addOptions(projectOptions);
-
-                    const actionRow =
-                        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-                            selectMenu,
-                        );
-
-                    const response: APIInteractionResponse = {
-                        type: InteractionResponseType.ChannelMessageWithSource,
-                        data: {
-                            flags: MessageFlags.Ephemeral,
-                            content: 'Please select a project to check the status of:',
-                            components: [actionRow.toJSON()],
-                        },
-                    };
-
-                    this.interactions.push({
-                        request: interaction,
-                        response,
-                        timestamp: Date.now(),
-                    });
-                    return response;
+                    customid = 'pstatus';
+                    content = 'to check the status of:';
                 }
-                if (args.close) {
-                    const selectMenu = new StringSelectMenuBuilder()
-                        .setCustomId('list:select:pclose')
-                        .setPlaceholder('Select a project')
-                        .setMinValues(1)
-                        .setMaxValues(1)
-                        .addOptions(projectOptions);
-
-                    const actionRow =
-                        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-                            selectMenu,
-                        );
-
-                    const response: APIInteractionResponse = {
-                        type: InteractionResponseType.ChannelMessageWithSource,
-                        data: {
-                            flags: MessageFlags.Ephemeral,
-                            content: 'Please select a project to close:',
-                            components: [actionRow.toJSON()],
-                        },
-                    };
-
-                    this.interactions.push({
-                        request: interaction,
-                        response,
-                        timestamp: Date.now(),
-                    });
-
-                    return response;
+                else if (args.close) {
+                    customid = 'pclose';
+                    content = 'to close:';
                 }
-            } else if (!isAdmin && args.close) {
+                else if (args.join) {
+                    customid = 'pjoin';
+                    content = 'to join';
+                } else {
+                    customid = 'this should not ever be' //this has to be here for it to compile for some reason
+                    content = 'this should not ever be'
+                }
+
+                if (!isAdmin && args.close) {
+                    return accessDenied;
+                }
+
+                const selectMenu = new StringSelectMenuBuilder()
+                    .setCustomId('list:select:' + customid)
+                    .setPlaceholder('Select a project')
+                    .setMinValues(1)
+                    .setMaxValues(1)
+                    .addOptions(projectOptions);
+
+                const actionRow =
+                    new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+                        selectMenu,
+                    );
+
                 const response: APIInteractionResponse = {
                     type: InteractionResponseType.ChannelMessageWithSource,
                     data: {
-                        content: 'This command is only accessible to administrators.',
                         flags: MessageFlags.Ephemeral,
+                        content: 'Please select a project ' + content,
+                        components: [actionRow.toJSON()],
                     },
                 };
+
+                this.interactions.push({
+                    request: interaction,
+                    response,
+                    timestamp: Date.now(),
+                });
                 return response;
-            }
-            if (args.create) {
-                const response: APIInteractionResponse = {
-                    type: InteractionResponseType.ChannelMessageWithSource,
-                    data: {
-                        content: '1. Create an account on https://spearmint.xyz/\n2. Follow the instructions on https://docs.spearmint.xyz/docs/create-a-project to create your project \n3. Retrieve the project ID, and API key under the Developers tab \n4. Use \'/list initialize\' and input info to initialize the project into discord \nRead more about the allow list miniapp at [insert link]',
-                        flags: MessageFlags.Ephemeral,
-                    },
-                };
-                return response;
-            }
+
+
+
+            } else
+                if (args.create) {
+                    const response: APIInteractionResponse = {
+                        type: InteractionResponseType.ChannelMessageWithSource,
+                        data: {
+                            content: '1. Create an account on https://spearmint.xyz/\n2. Follow the instructions on https://docs.spearmint.xyz/docs/create-a-project to create your project \n3. Retrieve the project ID, and API key under the Developers tab \n4. Use \'/list initialize\' and input info to initialize the project into discord \nRead more about the allow list miniapp at [insert link]',
+                            flags: MessageFlags.Ephemeral,
+                        },
+                    };
+                    return response;
+                }
+
         }
 
         if (
             interaction.type === InteractionType.MessageComponent &&
-            ((interaction.data.custom_id === ('list:select:pstatus')) || (interaction.data.custom_id === ('list:select:pclose')))
+            ((interaction.data.custom_id === ('list:select:pstatus')) || (interaction.data.custom_id === ('list:select:pclose')) || (interaction.data.custom_id === ('list:select:pjoin')))
         ) {
             // Get the selected project from the interaction data
             const interactionData = interaction.data as APIMessageStringSelectInteractionData;
@@ -372,6 +358,51 @@ export class AllowListController extends BaseDiscordActionController {
                         };
                         return response;
 
+                    } else if (interaction.data.custom_id === ('list:select:pjoin')) {
+                        const status = 'not_selected';
+
+                        //Attempts to call API function here
+                        listApi.createOrUpdateEntry(
+                            projectIDTable,
+                            apiKeyTable,
+                            userAddress,
+                            userId,
+                            status,
+                        );
+                        const response: APIInteractionResponse = {
+                            type: InteractionResponseType.ChannelMessageWithSource,
+                            data: {
+                                flags: MessageFlags.Ephemeral,
+                                embeds: [
+                                    new EmbedBuilder()
+                                        .setTitle(`${selectedProject} Allow List`)
+                                        .setDescription(`You have been entered to the ${selectedProject} Allow List`)
+                                        .toJSON(),
+                                ],
+                                components: [
+                                    new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                                        .addComponents([
+                                            new ButtonBuilder()
+                                                .setLabel('Status')
+                                                .setCustomId(`list:button:status:${recordID}`)
+                                                .setStyle(ButtonStyle.Primary),
+                                        ])
+                                        .addComponents([
+                                            new ButtonBuilder()
+                                                .setLabel('Leave')
+                                                .setCustomId(`list:button:leave:${recordID}`)
+                                                .setStyle(ButtonStyle.Danger),
+                                        ])
+                                        .toJSON(),
+                                ],
+                            },
+                        };
+                        this.interactions.push({
+                            request: interaction,
+                            response,
+                            timestamp: Date.now(),
+                        });
+                        return response;
                     }
                 }
             }
@@ -633,6 +664,11 @@ export class AllowListController extends BaseDiscordActionController {
                         type: ApplicationCommandOptionType.Subcommand,
                         name: 'create',
                         description: 'Create your allowlist on the spearmint website',
+                    },
+                    {
+                        type: ApplicationCommandOptionType.Subcommand,
+                        name: 'join',
+                        description: 'Join an open allowlist'
                     },
                 ],
             },
