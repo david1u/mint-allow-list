@@ -33,7 +33,6 @@ There are a few different commands.
 
 ```
 
-![Slash commands](docs/poll-action-commands.png)
-
-![Screenshot](docs/poll-action.png)
 ```
+![/list initialize](image.png)
+![/list create](image.png)
