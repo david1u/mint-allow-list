@@ -121,17 +121,13 @@ export class AllowListController extends BaseDiscordActionController {
     ): Promise<DiscordActionResponse | undefined> {
 
         const userAddress = interaction.actionContext?.gmPassAddress;
+        const isAdmin = interaction.actionContext?.isCommunityAdmin;
         const userId = interaction.member?.user.id;
         const airtable = new AirtableAPI();
         const listApi = new ListAPI();
 
-        const accessDenied: APIInteractionResponse = { //create a variable that denies access, removes redundancy
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-                content: 'This command is only accessible to administrators.',
-                flags: MessageFlags.Ephemeral,
-            },
-        };
+        const accessDenied = this.privateMessage('This command is only accessible to administrators.');
+
         if (interaction.type === InteractionType.ApplicationCommand) {
 
             const cmd = parseApplicationCommand(
@@ -139,7 +135,7 @@ export class AllowListController extends BaseDiscordActionController {
             );
 
             const args = cmd.args;
-            const isAdmin = interaction.actionContext?.isCommunityAdmin;
+
             const guildName = interaction.actionContext?.guildName;
 
             if (!isAdmin && args.initialize) {
@@ -156,14 +152,7 @@ export class AllowListController extends BaseDiscordActionController {
                 const existingRecord = records.find((record: any) => record.fields['Name'] === projName);
 
                 if (existingRecord) {
-                    const response: APIInteractionResponse = {
-                        type: InteractionResponseType.ChannelMessageWithSource,
-                        data: {
-                            content: `The name ${projName} already exists for allow list, please try against with another name or remove the current one`,
-                            flags: MessageFlags.Ephemeral,
-                        },
-                    };
-                    return response;
+                    return this.privateMessage(`The name ${projName} already exists for allow list, please try against with another name or remove the current one`);
                 }
 
                 // Adds inputted project ID into the array based on user input
@@ -185,7 +174,6 @@ export class AllowListController extends BaseDiscordActionController {
 
                 const currEntry = recordsUpdated.find((record: any) => record.fields['Name'] === projName);
                 const currEntryID = currEntry.id;
-                //console.log("THIS IS CURR ENTRY ID", currEntry);
 
                 const response: APIInteractionResponse = {
                     type: InteractionResponseType.ChannelMessageWithSource,
@@ -281,14 +269,7 @@ export class AllowListController extends BaseDiscordActionController {
 
             } else
                 if (args.create) {
-                    const response: APIInteractionResponse = {
-                        type: InteractionResponseType.ChannelMessageWithSource,
-                        data: {
-                            content: '1. Create an account on https://spearmint.xyz/\n2. Follow the instructions on https://docs.spearmint.xyz/docs/create-a-project to create your project \n3. Retrieve the project ID, and API key under the Developers tab \n4. Use \'/list initialize\' and input info to initialize the project into discord \nRead more about the allow list miniapp at [insert link]',
-                            flags: MessageFlags.Ephemeral,
-                        },
-                    };
-                    return response;
+                    return this.privateMessage('1. Create an account on https://spearmint.xyz/\n2. Follow the instructions on https://docs.spearmint.xyz/docs/create-a-project to create your project \n3. Retrieve the project ID, and API key under the Developers tab \n4. Use \'/list initialize\' and input info to initialize the project into discord \nRead more about the allow list miniapp at [insert link]');
                 }
 
         }
@@ -316,36 +297,48 @@ export class AllowListController extends BaseDiscordActionController {
                     const apiKeyTable = selectedRecord.fields['API key'];
                     const projectStatusTable = selectedRecord.fields['status'];
                     const recordID = selectedRecord.id;
-
+                    var entryStatus;
                     if (interaction.data.custom_id === ('list:select:pstatus')) {
-                        const entryStatus = await listApi.getEntryStatus(
-                            projectIDTable,
-                            apiKeyTable,
-                            userAddress,
-                        );
-                        const response: APIInteractionResponse = {
-                            type: InteractionResponseType.ChannelMessageWithSource,
-                            data: {
-                                flags: MessageFlags.Ephemeral,
-                                embeds: [
-                                    new EmbedBuilder()
-                                        .setTitle(`${selectedProject} AllowList Status`)
-                                        .setDescription(`${entryStatus.data.status} and the list is ${projectStatusTable}`)
-                                        .toJSON(),
-                                ],
-                                components: [
-                                    new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                                        .addComponents([
-                                            new ButtonBuilder()
-                                                .setLabel('leave')
-                                                .setCustomId(`list:button:leave:${recordID}`)
-                                                .setStyle(ButtonStyle.Danger),
-                                        ])
-                                        .toJSON(),
-                                ],
-                            },
-                        };
-                        return response;
+                        if (!isAdmin) {
+                            try {
+                                entryStatus = await listApi.getEntryStatus(
+                                    projectIDTable,
+                                    apiKeyTable,
+                                    userAddress,
+                                );
+                            } catch (error) { //if the above errors, that means that person isn't in that project
+                                return this.privateMessage('You did not submit an entry to this list');
+
+                            }
+
+
+                            const response: APIInteractionResponse = {
+                                type: InteractionResponseType.ChannelMessageWithSource,
+                                data: {
+                                    flags: MessageFlags.Ephemeral,
+                                    embeds: [
+                                        new EmbedBuilder()
+                                            .setTitle(`${selectedProject} AllowList Status`)
+                                            .setDescription(`${entryStatus.data.status} and the list is ${projectStatusTable}`)
+                                            .toJSON(),
+                                    ],
+                                    components: [
+                                        new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                                            .addComponents([
+                                                new ButtonBuilder()
+                                                    .setLabel('Leave')
+                                                    .setCustomId(`list:button:leave:${recordID}`)
+                                                    .setStyle(ButtonStyle.Danger),
+                                            ])
+                                            .toJSON(),
+                                    ],
+                                },
+                            };
+                            return response;
+                        } else {
+                            var link = 'https://spearmint.xyz/projects/' + projectIDTable + '/dashboard'
+                            return this.privateMessage("Check out your selected project at " + link)
+                        }
                     } else if (interaction.data.custom_id === ('list:select:pclose')) {
 
                         airtable.updateRecord(recordID, { 'status': 'closed' });
@@ -415,9 +408,7 @@ export class AllowListController extends BaseDiscordActionController {
 
             // Extract the project ID from the custom ID (assuming the custom ID has the format 'list:button:join/status/leave<projectID>')
             const entryId = customId.split(':')[3]; // The project ID will be at index 4 in the split array
-            //console.log('THIS IS ENTRYIDD,', customId);
             const currRecord = await airtable.getRecord(entryId);
-            //console.log("THIS IS THE CURRENT RECORD", currRecord);
 
             // Check if a matching record is found
 
@@ -675,4 +666,15 @@ export class AllowListController extends BaseDiscordActionController {
         ];
         return commands;
     }
+    private privateMessage(message: string) { //method to return a private message. Only has a message, no title, no other embeds
+        const response: APIInteractionResponse = {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+                content: message,
+                flags: MessageFlags.Ephemeral,
+            },
+        };
+        return response;
+    }
+
 }
