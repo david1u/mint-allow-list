@@ -352,38 +352,58 @@ export class AllowListController extends BaseDiscordActionController {
                         return response;
 
                     } else if (interaction.data.custom_id === ('list:select:pjoin')) {
-                        const status = 'not_selected';
 
-                        //Attempts to call API function here
-                        listApi.createOrUpdateEntry(
-                            projectIDTable,
-                            apiKeyTable,
-                            userAddress,
-                            userId,
-                            status,
-                        );
+                        const response = await this.createAllowListEntry(interaction, selectedProject, projectIDTable, apiKeyTable, recordID);
+                        return response;
+                    }
+                }
+            }
+
+            if (interaction.type === InteractionType.MessageComponent &&
+                interaction.data.custom_id.startsWith('list:button:')) {
+
+                const customId = interaction.data.custom_id;
+
+                // Extract the project ID from the custom ID (assuming the custom ID has the format 'list:button:join/status/leave<projectID>')
+                const entryId = customId.split(':')[3]; // The project ID will be at index 4 in the split array
+                const currRecord = await airtable.getRecord(entryId);
+
+                // Check if a matching record is found
+
+                // Save the corresponding IDs
+                const listNameTable = currRecord.fields['Name'];
+                const projectIDTable = currRecord.fields['Proj ID'];
+                const apiKeyTable = currRecord.fields['API key'];
+
+
+                if (customId.startsWith('list:button:join')) {
+
+                    const response = await this.createAllowListEntry(interaction, listNameTable, projectIDTable, apiKeyTable, currRecord);
+                    return response;
+
+                } else if (customId.startsWith(`list:button:status:${entryId}`)) {
+                    const entryStatus = await listApi.getEntryStatus(
+                        projectIDTable,
+                        apiKeyTable,
+                        userAddress,
+                    );
+                    {
                         const response: APIInteractionResponse = {
                             type: InteractionResponseType.ChannelMessageWithSource,
                             data: {
                                 flags: MessageFlags.Ephemeral,
                                 embeds: [
                                     new EmbedBuilder()
-                                        .setTitle(`${selectedProject} Allow List`)
-                                        .setDescription(`You have been entered to the ${selectedProject} Allow List`)
+                                        .setTitle(`${listNameTable} Allow List Status`)
+                                        .setDescription(entryStatus.data.status)
                                         .toJSON(),
                                 ],
                                 components: [
                                     new ActionRowBuilder<MessageActionRowComponentBuilder>()
                                         .addComponents([
                                             new ButtonBuilder()
-                                                .setLabel('Status')
-                                                .setCustomId(`list:button:status:${recordID}`)
-                                                .setStyle(ButtonStyle.Primary),
-                                        ])
-                                        .addComponents([
-                                            new ButtonBuilder()
                                                 .setLabel('Leave')
-                                                .setCustomId(`list:button:leave:${recordID}`)
+                                                .setCustomId(`list:button:leave:${entryId}`)
                                                 .setStyle(ButtonStyle.Danger),
                                         ])
                                         .toJSON(),
@@ -397,96 +417,35 @@ export class AllowListController extends BaseDiscordActionController {
                         });
                         return response;
                     }
-                }
-            }
-        }
+                } else if (customId.startsWith('list:button:leave')) {
+                    // Sets Var
+                    const status = 'disqualified';
+                    listApi.createOrUpdateEntry(
+                        projectIDTable,
+                        apiKeyTable,
+                        userAddress,
+                        userId,
+                        status,
+                    );
 
-        if (interaction.type === InteractionType.MessageComponent &&
-            interaction.data.custom_id.startsWith('list:button:')) {
-
-            const customId = interaction.data.custom_id;
-
-            // Extract the project ID from the custom ID (assuming the custom ID has the format 'list:button:join/status/leave<projectID>')
-            const entryId = customId.split(':')[3]; // The project ID will be at index 4 in the split array
-            const currRecord = await airtable.getRecord(entryId);
-
-            // Check if a matching record is found
-
-            // Save the corresponding IDs
-            const listNameTable = currRecord.fields['Name'];
-            const projectIDTable = currRecord.fields['Proj ID'];
-            const apiKeyTable = currRecord.fields['API key'];
-
-
-            if (customId.startsWith('list:button:join')) {
-                const status = 'not_selected';
-
-                //Attempts to call API function here
-                listApi.createOrUpdateEntry(
-                    projectIDTable,
-                    apiKeyTable,
-                    userAddress,
-                    userId,
-                    status,
-                );
-                const response: APIInteractionResponse = {
-                    type: InteractionResponseType.ChannelMessageWithSource,
-                    data: {
-                        flags: MessageFlags.Ephemeral,
-                        embeds: [
-                            new EmbedBuilder()
-                                .setTitle(`${listNameTable} Allow List`)
-                                .setDescription(`You have been entered to the ${listNameTable} Allow List`)
-                                .toJSON(),
-                        ],
-                        components: [
-                            new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                                .addComponents([
-                                    new ButtonBuilder()
-                                        .setLabel('Status')
-                                        .setCustomId(`list:button:status:${entryId}`)
-                                        .setStyle(ButtonStyle.Primary),
-                                ])
-                                .addComponents([
-                                    new ButtonBuilder()
-                                        .setLabel('Leave')
-                                        .setCustomId(`list:button:leave:${entryId}`)
-                                        .setStyle(ButtonStyle.Danger),
-                                ])
-                                .toJSON(),
-                        ],
-                    },
-                };
-                this.interactions.push({
-                    request: interaction,
-                    response,
-                    timestamp: Date.now(),
-                });
-                return response;
-            } else if (customId.startsWith(`list:button:status:${entryId}`)) {
-                const entryStatus = await listApi.getEntryStatus(
-                    projectIDTable,
-                    apiKeyTable,
-                    userAddress,
-                );
-                {
                     const response: APIInteractionResponse = {
                         type: InteractionResponseType.ChannelMessageWithSource,
                         data: {
                             flags: MessageFlags.Ephemeral,
                             embeds: [
                                 new EmbedBuilder()
-                                    .setTitle(`${listNameTable} Allow List Status`)
-                                    .setDescription(entryStatus.data.status)
+                                    .setTitle(`${listNameTable}`)
+                                    .setDescription(`You have left ${listNameTable}`)
                                     .toJSON(),
                             ],
                             components: [
                                 new ActionRowBuilder<MessageActionRowComponentBuilder>()
+
                                     .addComponents([
                                         new ButtonBuilder()
-                                            .setLabel('Leave')
-                                            .setCustomId(`list:button:leave:${entryId}`)
-                                            .setStyle(ButtonStyle.Danger),
+                                            .setLabel('Join')
+                                            .setCustomId(`list:button:join:${entryId}`)
+                                            .setStyle(ButtonStyle.Success),
                                     ])
                                     .toJSON(),
                             ],
@@ -499,49 +458,63 @@ export class AllowListController extends BaseDiscordActionController {
                     });
                     return response;
                 }
-            } else if (customId.startsWith('list:button:leave')) {
-                // Sets Var
-                const status = 'disqualified';
-                listApi.createOrUpdateEntry(
-                    projectIDTable,
-                    apiKeyTable,
-                    userAddress,
-                    userId,
-                    status,
-                );
 
-                const response: APIInteractionResponse = {
-                    type: InteractionResponseType.ChannelMessageWithSource,
-                    data: {
-                        flags: MessageFlags.Ephemeral,
-                        embeds: [
-                            new EmbedBuilder()
-                                .setTitle(`${listNameTable}`)
-                                .setDescription(`You have left ${listNameTable}`)
-                                .toJSON(),
-                        ],
-                        components: [
-                            new ActionRowBuilder<MessageActionRowComponentBuilder>()
-
-                                .addComponents([
-                                    new ButtonBuilder()
-                                        .setLabel('Join')
-                                        .setCustomId(`list:button:join:${entryId}`)
-                                        .setStyle(ButtonStyle.Success),
-                                ])
-                                .toJSON(),
-                        ],
-                    },
-                };
-                this.interactions.push({
-                    request: interaction,
-                    response,
-                    timestamp: Date.now(),
-                });
-                return response;
             }
-
         }
+    }
+    private async createAllowListEntry(
+        interaction: DiscordActionRequest<APIInteraction>,
+        projName: string,
+        projectID: string,
+        apiKey: string,
+        entryID: string,
+    ): Promise<APIInteractionResponse> {
+
+        const userAddress = interaction.actionContext?.gmPassAddress;
+        const userId = interaction.member?.user.id;
+        const airtable = new AirtableAPI();
+        const listApi = new ListAPI();
+        const status = 'not_selected';
+
+        // Attempts to call API function here
+        listApi.createOrUpdateEntry(projectID, apiKey, userAddress, userId, status);
+
+        const response: APIInteractionResponse = {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+                flags: MessageFlags.Ephemeral,
+                embeds: [
+                    new EmbedBuilder()
+                        .setTitle(`${projName} Allow List`)
+                        .setDescription(`You have been entered to the ${projName} Allow List`)
+                        .toJSON(),
+                ],
+                components: [
+                    new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                        .addComponents([
+                            new ButtonBuilder()
+                                .setLabel('Status')
+                                .setCustomId(`list:button:status:${entryID}`)
+                                .setStyle(ButtonStyle.Primary),
+                        ])
+                        .addComponents([
+                            new ButtonBuilder()
+                                .setLabel('Leave')
+                                .setCustomId(`list:button:leave:${entryID}`)
+                                .setStyle(ButtonStyle.Danger),
+                        ])
+                        .toJSON(),
+                ],
+            },
+        };
+
+        this.interactions.push({
+            request: interaction,
+            response,
+            timestamp: Date.now(),
+        });
+
+        return response;
     }
 
     private renderInteractionData(
@@ -676,5 +649,4 @@ export class AllowListController extends BaseDiscordActionController {
         };
         return response;
     }
-
 }
