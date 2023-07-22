@@ -378,7 +378,7 @@ export class AllowListController extends BaseDiscordActionController {
 
                 if (customId.startsWith('list:button:join')) {
 
-                    const response = await this.createAllowListEntry(interaction, listNameTable, projectIDTable, apiKeyTable, currRecord);
+                    const response = await this.createAllowListEntry(interaction, listNameTable, projectIDTable, apiKeyTable, entryId);
                     return response;
 
                 } else if (customId.startsWith(`list:button:status:${entryId}`)) {
@@ -472,7 +472,6 @@ export class AllowListController extends BaseDiscordActionController {
 
         const userAddress = interaction.actionContext?.gmPassAddress;
         const userId = interaction.member?.user.id;
-        const airtable = new AirtableAPI();
         const listApi = new ListAPI();
         const status = 'not_selected';
 
