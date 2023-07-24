@@ -300,7 +300,7 @@ export class AllowListController extends BaseDiscordActionController {
                     var entryStatus;
 
                     if (interaction.data.custom_id === ('list:select:pstatus')) {
-                        if (!isAdmin) {
+                        if (isAdmin) {
                             try {
                                 entryStatus = await listApi.getEntryStatus(
                                     projectIDTable,
@@ -369,6 +369,8 @@ export class AllowListController extends BaseDiscordActionController {
                                 flags: MessageFlags.Ephemeral,
                                 embeds: [
                                     new EmbedBuilder()
+                                        .setColor('Green')
+                                        .setAuthor({ name: 'Success!', iconURL: 'https://i.imgur.com/kLfE9HY.png' })
                                         .setTitle(`${selectedProject} Allowlist`)
                                         .setDescription(`You have been entered to the ${selectedProject} Allowlist`)
                                         .toJSON(),
@@ -436,8 +438,10 @@ export class AllowListController extends BaseDiscordActionController {
                         flags: MessageFlags.Ephemeral,
                         embeds: [
                             new EmbedBuilder()
-                                .setTitle(`${listNameTable} Allowlist`)
-                                .setDescription(`You have been entered to the ${listNameTable} Allowlist`)
+                                .setColor('Green')
+                                .setAuthor({ name: 'Success!', iconURL: 'https://i.imgur.com/kLfE9HY.png' })
+                                .setTitle(`You have been entered to the ${listNameTable} Allow List`)
+                                .setImage('https://i.imgur.com/hxvxuOS.png')
                                 .toJSON(),
                         ],
                         components: [
@@ -477,8 +481,10 @@ export class AllowListController extends BaseDiscordActionController {
                             flags: MessageFlags.Ephemeral,
                             embeds: [
                                 new EmbedBuilder()
-                                    .setTitle(`${listNameTable} Allowlist Status`)
+                                    .setColor('White')
+                                    .setTitle(`${listNameTable} Allow List Status`)
                                     .setDescription(entryStatus.data.status)
+                                    .setImage('https://i.imgur.com/5sNOgLA.png')
                                     .toJSON(),
                             ],
                             components: [
@@ -517,8 +523,9 @@ export class AllowListController extends BaseDiscordActionController {
                         flags: MessageFlags.Ephemeral,
                         embeds: [
                             new EmbedBuilder()
-                                .setTitle(`${listNameTable}`)
-                                .setDescription(`You have left ${listNameTable}`)
+                                .setColor('Red')
+                                .setTitle(`You have left ${listNameTable}`)
+                                .setImage('https://i.imgur.com/b49Eg1I.png')
                                 .toJSON(),
                         ],
                         components: [
