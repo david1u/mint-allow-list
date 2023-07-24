@@ -371,8 +371,8 @@ export class AllowListController extends BaseDiscordActionController {
                                     new EmbedBuilder()
                                         .setColor('Green')
                                         .setAuthor({ name: 'Success!', iconURL: 'https://i.imgur.com/kLfE9HY.png' })
-                                        .setTitle(`${selectedProject} Allowlist`)
-                                        .setDescription(`You have been entered to the ${selectedProject} Allowlist`)
+                                        .setTitle(`You have been entered to the ${selectedProject} Allowlist`)
+                                        .setImage('https://i.imgur.com/hxvxuOS.png')
                                         .toJSON(),
                                 ],
                                 components: [
