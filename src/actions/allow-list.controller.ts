@@ -15,6 +15,7 @@ import {
     DiscordInteractionPattern,
     InteractionResponseType,
     InteractionType,
+    buildDeferredInteractionResponse,
     parseApplicationCommand,
 } from '@collabland/discord';
 import { MiniAppManifest } from '@collabland/models';
@@ -109,31 +110,31 @@ export class AllowListController extends BaseDiscordActionController {
         };
         return metadata;
     }
-    /*protected async handle2(
+    protected async handle(
         interaction: DiscordActionRequest<APIInteraction>,
-      ): Promise<DiscordActionResponse | undefined> {
+    ): Promise<DiscordActionResponse | undefined> {
         const deferredResponse = buildDeferredInteractionResponse(true);
         this.process(interaction)
-          .then(response => {
-            if (
-              response != null &&
-              response.type === InteractionResponseType.ChannelMessageWithSource
-            ) {
-              this.followupMessage(interaction, response.data);
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-          });
+            .then(response => {
+                if (
+                    response != null &&
+                    response.type === InteractionResponseType.ChannelMessageWithSource
+                ) {
+                    this.followupMessage(interaction, response.data);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         return deferredResponse;
-      }
+    }
     /**
      * Handle the Discord interaction
      * @param interaction - Discord interaction with Collab.Land action context
      * @returns - Discord interaction response
      */
 
-    protected async handle(
+    protected async process(
         interaction: DiscordActionRequest<APIInteraction>,
     ): Promise<DiscordActionResponse | undefined> {
 
@@ -174,7 +175,7 @@ export class AllowListController extends BaseDiscordActionController {
                 const existingRecord = records.find((record: any) => record.fields['Name'] === projName);
 
                 if (existingRecord) {
-                    return this.privateMessage(`The name ${projName} already exists for allow list, please try against with another name or remove the current one`);
+                    return this.privateMessage(`The name ${projName} already exists for an allowlist, please try against with another name or remove the current one`);
                 }
 
                 // Adds inputted project ID into the array based on user input
@@ -204,7 +205,7 @@ export class AllowListController extends BaseDiscordActionController {
                             new EmbedBuilder()
                                 .setTitle(`${projName} Allowlist`)
                                 .setImage('https://i.imgur.com/zDXrGPU.png')
-                                .setDescription('Click join the be a part of this Allowlist!')
+                                .setDescription('Click join the be a part of this allowlist!')
                                 .toJSON(),
                         ],
                         components: [
@@ -292,7 +293,7 @@ export class AllowListController extends BaseDiscordActionController {
 
             } else
                 if (args.create) {
-                    return this.privateMessage('1. Create an account on https://spearmint.xyz/\n2. Follow the instructions on https://docs.spearmint.xyz/docs/create-a-project to create your project \n3. Retrieve the project ID, and API key under the Developers tab \n4. Use \'/list initialize\' and input info to initialize the project into discord \nRead more about the allow list miniapp at [insert link]');
+                    return this.privateMessage('1. Create an account on https://spearmint.xyz/\n2. Follow the instructions on https://docs.spearmint.xyz/docs/create-a-project to create your project \n3. Retrieve the project ID, and API key under the Developers tab \n4. Use \'/list initialize\' and input info to initialize the project into discord \nRead more about the allowlist miniapp at [insert link]');
                 }
 
         }
@@ -343,7 +344,7 @@ export class AllowListController extends BaseDiscordActionController {
                                     embeds: [
                                         new EmbedBuilder()
                                             .setColor('White')
-                                            .setTitle(`${selectedProject} Allow List Status`)
+                                            .setTitle(`${selectedProject} Allowlist Status`)
                                             .setDescription(entryStatus.data.status)
                                             .setImage('https://i.imgur.com/5sNOgLA.png')
                                             .toJSON(),
@@ -401,7 +402,7 @@ export class AllowListController extends BaseDiscordActionController {
                                     new EmbedBuilder()
                                         .setColor('Green')
                                         .setAuthor({ name: 'Success!', iconURL: 'https://i.imgur.com/kLfE9HY.png' })
-                                        .setTitle(`You have been entered to the ${selectedProject} Allowlist`)
+                                        .setTitle(`You have been entered to the ${selectedProject} allowlist`)
                                         .setImage('https://i.imgur.com/hxvxuOS.png')
                                         .toJSON(),
                                 ],
@@ -470,7 +471,7 @@ export class AllowListController extends BaseDiscordActionController {
                             new EmbedBuilder()
                                 .setColor('Green')
                                 .setAuthor({ name: 'Success!', iconURL: 'https://i.imgur.com/kLfE9HY.png' })
-                                .setTitle(`You have been entered to the ${listNameTable} Allow List`)
+                                .setTitle(`You have been entered to the ${listNameTable} allowlist`)
                                 .setImage('https://i.imgur.com/hxvxuOS.png')
                                 .toJSON(),
                         ],
@@ -512,7 +513,7 @@ export class AllowListController extends BaseDiscordActionController {
                             embeds: [
                                 new EmbedBuilder()
                                     .setColor('White')
-                                    .setTitle(`${listNameTable} Allow List Status`)
+                                    .setTitle(`${listNameTable} Allowlist Status`)
                                     .setDescription(entryStatus.data.status)
                                     .setImage('https://i.imgur.com/5sNOgLA.png')
                                     .toJSON(),
