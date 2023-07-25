@@ -109,7 +109,24 @@ export class AllowListController extends BaseDiscordActionController {
         };
         return metadata;
     }
-
+    /*protected async handle2(
+        interaction: DiscordActionRequest<APIInteraction>,
+      ): Promise<DiscordActionResponse | undefined> {
+        const deferredResponse = buildDeferredInteractionResponse(true);
+        this.process(interaction)
+          .then(response => {
+            if (
+              response != null &&
+              response.type === InteractionResponseType.ChannelMessageWithSource
+            ) {
+              this.followupMessage(interaction, response.data);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+        return deferredResponse;
+      }
     /**
      * Handle the Discord interaction
      * @param interaction - Discord interaction with Collab.Land action context
@@ -699,3 +716,5 @@ export class AllowListController extends BaseDiscordActionController {
     }
 
 }
+
+
