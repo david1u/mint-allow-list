@@ -146,6 +146,11 @@ export class AllowListController extends BaseDiscordActionController {
                 const projectID = args.initialize.projectid;
                 const apiKey = args.initialize.apikey;
                 const projName = args.initialize.name;
+                try {
+                    await listApi.createOrUpdateEntry(projectID, apiKey, userAddress, userId, 'disqualified'); //tries to enter the creator into the list and sets to disqualified
+                } catch (error) {
+                    return this.privateMessage("Invalid project ID or API key");
+                }
 
                 // Check if the name already exists in the Airtable
                 const records = await airtable.getRecords();
@@ -342,6 +347,11 @@ export class AllowListController extends BaseDiscordActionController {
                         }
                     } else if (interaction.data.custom_id === ('list:select:pclose')) {
 
+                        /*if (airtable.getRecord(recordID).fields['status'] === 'closed') {
+                            return this.privateMessage("This allowlist has already been closed")
+                        }
+                        */
+                        //DOESNT WORK IDK HOW TO GET THE STATUS OF A RECORD
                         airtable.updateRecord(recordID, { 'status': 'closed' });
 
                         const response: APIInteractionResponse = {
