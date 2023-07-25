@@ -205,7 +205,7 @@ export class AllowListController extends BaseDiscordActionController {
                             new EmbedBuilder()
                                 .setTitle(`${projName} Allowlist`)
                                 .setImage('https://i.imgur.com/zDXrGPU.png')
-                                .setDescription('Click join the be a part of this allowlist!')
+                                .setDescription('Click join to be a part of this allowlist!')
                                 .toJSON(),
                         ],
                         components: [
