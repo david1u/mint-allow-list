@@ -186,6 +186,7 @@ export class AllowListController extends BaseDiscordActionController {
                         embeds: [
                             new EmbedBuilder()
                                 .setTitle(`${projName} Allowlist`)
+                                .setImage('https://i.imgur.com/zDXrGPU.png')
                                 .setDescription('Click join the be a part of this Allowlist!')
                                 .toJSON(),
                         ],
@@ -324,8 +325,10 @@ export class AllowListController extends BaseDiscordActionController {
                                     flags: MessageFlags.Ephemeral,
                                     embeds: [
                                         new EmbedBuilder()
-                                            .setTitle(`${selectedProject} Allowlist Status`)
-                                            .setDescription(`Status: ${entryStatus.data.status}\nThe list is ${projectStatusTable}`)
+                                            .setColor('White')
+                                            .setTitle(`${selectedProject} Allow List Status`)
+                                            .setDescription(entryStatus.data.status)
+                                            .setImage('https://i.imgur.com/5sNOgLA.png')
                                             .toJSON(),
                                     ],
                                     components: [
