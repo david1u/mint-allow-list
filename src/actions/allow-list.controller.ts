@@ -3,7 +3,7 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import { HttpErrors, stringify } from '@collabland/common';
+import { HttpErrors, sleep, stringify } from '@collabland/common';
 import {
     APIInteractionResponse,
     ApplicationCommandSpec,
@@ -113,14 +113,38 @@ export class AllowListController extends BaseDiscordActionController {
     protected async handle(
         interaction: DiscordActionRequest<APIInteraction>,
     ): Promise<DiscordActionResponse | undefined> {
-        const deferredResponse = buildDeferredInteractionResponse(true);
+        let isPublic = false;
+        if (interaction.type === InteractionType.ApplicationCommand) {
+
+            const cmd = parseApplicationCommand(
+                interaction as APIChatInputApplicationCommandInteraction,
+            );
+
+            const args = cmd.args;
+            console.log(args);
+            if (args.initialize) {
+                isPublic = true;
+            }
+        }
+        const deferredResponse = buildDeferredInteractionResponse(!isPublic);
         this.process(interaction)
-            .then(response => {
+            .then(async response => {
                 if (
                     response != null &&
                     response.type === InteractionResponseType.ChannelMessageWithSource
                 ) {
-                    this.followupMessage(interaction, response.data);
+                    //await sleep(1000);
+                    try {
+                        await this.followupMessage(interaction, response.data);
+                    }
+                    catch (error) {
+                        if (error.details?.error?.statusCode === 404) {
+                            await sleep(500);
+                            await this.followupMessage(interaction, response.data);
+                        }
+
+                    }
+
                 }
             })
             .catch(error => {
@@ -315,7 +339,7 @@ export class AllowListController extends BaseDiscordActionController {
                     var entryStatus;
 
                     if (interaction.data.custom_id === ('list:select:pstatus')) {
-                        if (isAdmin) {
+                        if (!isAdmin) {
                             try {
                                 entryStatus = await listApi.getEntryStatus(
                                     projectIDTable,
@@ -550,6 +574,10 @@ export class AllowListController extends BaseDiscordActionController {
                         ],
                     },
                 };
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
                 return response;
             }
 
