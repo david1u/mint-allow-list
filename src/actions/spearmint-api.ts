@@ -3,7 +3,7 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import {getFetch, handleFetchResponse} from '@collabland/common';
+import { getFetch, handleFetchResponse } from '@collabland/common';
 
 type responseAPI = {
   data: Array<{
@@ -16,27 +16,27 @@ type responseAPI = {
 type GetEntryStatusAPI = {
   data: {
     status:
-      | 'submitted'
-      | 'selected'
-      | 'waitlisted'
-      | 'not_selected'
-      | 'disqualified';
+    | 'submitted'
+    | 'selected'
+    | 'waitlisted'
+    | 'not_selected'
+    | 'disqualified';
   };
 };
 type GetEntryAPI = {
   data: {
     address: string;
     status:
-      | 'submitted'
-      | 'selected'
-      | 'waitlisted'
-      | 'not_selected'
-      | 'disqualified';
+    | 'submitted'
+    | 'selected'
+    | 'waitlisted'
+    | 'not_selected'
+    | 'disqualified';
     tentativeStatus:
-      | 'selected'
-      | 'waitlisted'
-      | 'not_selected'
-      | 'disqualified';
+    | 'selected'
+    | 'waitlisted'
+    | 'not_selected'
+    | 'disqualified';
     attestationData: Record<string, string | boolean> | null;
   };
 };
@@ -44,16 +44,16 @@ type GetEntryResponseAPI = {
   data: {
     address: string;
     status:
-      | 'submitted'
-      | 'selected'
-      | 'waitlisted'
-      | 'not_selected'
-      | 'disqualified';
+    | 'submitted'
+    | 'selected'
+    | 'waitlisted'
+    | 'not_selected'
+    | 'disqualified';
     tentativeStatus:
-      | 'selected'
-      | 'waitlisted'
-      | 'not_selected'
-      | 'disqualified';
+    | 'selected'
+    | 'waitlisted'
+    | 'not_selected'
+    | 'disqualified';
     attestationData: Record<string, string | boolean> | null;
   };
 };
@@ -67,7 +67,7 @@ type GetProofAPIResponse = {
 
 export class ListAPI {
   private fetch = getFetch({
-    headers: {'api-key': 'spsk_9U84OvT1ReIc8r0XP3nPZQsUEwYVnDtCMdtWajfI'}, //might need user to submit their own API key as well
+    headers: { 'api-key': 'spsk_9U84OvT1ReIc8r0XP3nPZQsUEwYVnDtCMdtWajfI' }, //might need user to submit their own API key as well
   });
 
   async createAttestationSchema(projectID: string, apiKey: string) {
@@ -134,7 +134,7 @@ export class ListAPI {
     const response = await this.fetch(
       `https://api.spearmint.xyz/projects/${projectID}/proofs/${address}`,
       {
-        headers: {authorization: `Bearer ${apiKey}`},
+        headers: { authorization: `Bearer ${apiKey}` },
 
         method: 'get',
       },
@@ -147,19 +147,30 @@ export class ListAPI {
     const response = await this.fetch(
       `https://api.spearmint.xyz/projects/${projectID}/entries/${address}/status`,
       {
-        headers: {authorization: `Bearer ${apiKey}`},
+        headers: { authorization: `Bearer ${apiKey}` },
         method: 'get',
       },
     );
     const data = await handleFetchResponse<GetEntryStatusAPI>(response);
-    return data;
+
+    if (data.data.status === "not_selected") {
+      return ("You have not been selected");
+    } else if (data.data.status === "submitted") {
+      return ("submitted");
+    } else if (data.data.status === "selected") {
+      return ("You have been selected!");
+    } else if (data.data.status === "disqualified") {
+      return ("You have been disqualified");
+    } else {
+      return ("You have been waitlisted");
+    }
   }
 
   async getEntry(projectID: string, apiKey: string, address: string) {
     const response = await this.fetch(
       `https://api.spearmint.xyz/projects/${projectID}/entries/${address}`,
       {
-        headers: {authorization: `Bearer ${apiKey}`},
+        headers: { authorization: `Bearer ${apiKey}` },
         method: 'get',
       },
     );
@@ -168,4 +179,4 @@ export class ListAPI {
   }
 }
 
-async function main() {}
+async function main() { }

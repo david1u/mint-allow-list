@@ -220,11 +220,7 @@ export class AllowListController extends BaseDiscordActionController {
                         ],
                     },
                 };
-                this.interactions.push({
-                    request: interaction,
-                    response,
-                    timestamp: Date.now(),
-                });
+
                 return response;
             }
 
@@ -282,11 +278,6 @@ export class AllowListController extends BaseDiscordActionController {
                     },
                 };
 
-                this.interactions.push({
-                    request: interaction,
-                    response,
-                    timestamp: Date.now(),
-                });
                 return response;
 
 
@@ -345,7 +336,7 @@ export class AllowListController extends BaseDiscordActionController {
                                         new EmbedBuilder()
                                             .setColor('White')
                                             .setTitle(`${selectedProject} Allowlist Status`)
-                                            .setDescription(entryStatus.data.status)
+                                            .setDescription(entryStatus)
                                             .setImage('https://i.imgur.com/5sNOgLA.png')
                                             .toJSON(),
                                     ],
@@ -424,11 +415,6 @@ export class AllowListController extends BaseDiscordActionController {
                                 ],
                             },
                         };
-                        this.interactions.push({
-                            request: interaction,
-                            response,
-                            timestamp: Date.now(),
-                        });
                         return response;
                     }
                 }
@@ -493,11 +479,6 @@ export class AllowListController extends BaseDiscordActionController {
                         ],
                     },
                 };
-                this.interactions.push({
-                    request: interaction,
-                    response,
-                    timestamp: Date.now(),
-                });
                 return response;
             } else if (customId.startsWith('list:button:status')) {
                 const entryStatus = await listApi.getEntryStatus(
@@ -505,6 +486,7 @@ export class AllowListController extends BaseDiscordActionController {
                     apiKeyTable,
                     userAddress,
                 );
+
                 {
                     const response: APIInteractionResponse = {
                         type: InteractionResponseType.ChannelMessageWithSource,
@@ -514,7 +496,7 @@ export class AllowListController extends BaseDiscordActionController {
                                 new EmbedBuilder()
                                     .setColor('White')
                                     .setTitle(`${listNameTable} Allowlist Status`)
-                                    .setDescription(entryStatus.data.status)
+                                    .setDescription(`${entryStatus}`)
                                     .setImage('https://i.imgur.com/5sNOgLA.png')
                                     .toJSON(),
                             ],
@@ -530,11 +512,7 @@ export class AllowListController extends BaseDiscordActionController {
                             ],
                         },
                     };
-                    this.interactions.push({
-                        request: interaction,
-                        response,
-                        timestamp: Date.now(),
-                    });
+
                     return response;
                 }
             } else if (customId.startsWith('list:button:leave')) {
@@ -572,11 +550,6 @@ export class AllowListController extends BaseDiscordActionController {
                         ],
                     },
                 };
-                this.interactions.push({
-                    request: interaction,
-                    response,
-                    timestamp: Date.now(),
-                });
                 return response;
             }
 
