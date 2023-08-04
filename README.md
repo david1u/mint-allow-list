@@ -1,6 +1,6 @@
 # @collabland/example-allow-list
 
-This example illustrates how to implement a Collab action for Discord using
+This example illustrates how to implement a Collab action allow list for Discord using
 different interaction types:
 
 - [Slash commands](https://discord.com/developers/docs/interactions/application-commands#slash-commands)
@@ -8,9 +8,10 @@ different interaction types:
 - [Buttons](https://discord.com/developers/docs/interactions/message-components#buttons)
 - [Select menus](https://discord.com/developers/docs/interactions/message-components#select-menus)
 
-SPEARMINT API ALLOW LIST
+# Why use this miniapp? 
+This miniapp allows teams (NFT creators, developers, community managers) to use allowlists integrated into discord, giving them more control over their launches, mints and communities. For community members, it gives an easy way for them to join, leave, or check the status of allowlists they have joined.
 
-# Try it out
+# Try it out 
 In your terminal:
 npm run build npm run server 
 In NGROK:
@@ -20,6 +21,7 @@ ngrok http 3000
 /list create
 /list initialize
 /list status
+/list join
 /list close
 ```
 
@@ -42,8 +44,26 @@ There are a few different commands.
 
 ![/list status](docs/dropdownmenuliststatus.png)
 
+4. /list join - This command is another way for community members to enter an open allowlist. It will provide a dropdown menu of all open allowlists and members can select which allowlist to join.
 
+![list join](https://github.com/david1u/mint-allow-list/assets/129913826/6c04df8b-8dfa-4e9f-b3ad-df9797186d0e)
 
-```
+5. /list close - This command allows for the list manager to close the allow list with the Discord Bot miniapp. It will provide a dropdown menu of all active allowlists and managers can select which allowlist to close.
 
+![list close](https://github.com/david1u/mint-allow-list/assets/129913826/eba912ef-3afb-4070-a444-f3a069cfc11e)
 
+# High Level Architecture Diagram  
+
+![arhachite guadmar](https://github.com/david1u/mint-allow-list/assets/129913826/c61bc504-7d2e-4676-9b30-5290ff0418cb)
+
+TBA
+
+# Whats Next  
+
+- We plan on automating the closure of allow lists based on their inputted termination dates
+- Currently, /list close only closes the list within the airtable. We hope to be able to close the spearmint allow list directly in the future.
+- UI fixes where the collab.land bot will tell you you joined an already closed allow list.
+
+# How to Contribute to this Project
+
+Don't
