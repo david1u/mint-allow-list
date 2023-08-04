@@ -63,6 +63,7 @@ TBA
 - We plan on automating the closure of allow lists based on their inputted termination dates
 - Currently, /list close only closes the list within the airtable. We hope to be able to close the spearmint allow list directly in the future.
 - UI fixes where the collab.land bot will tell you you joined an already closed allow list.
+- Will update our code in accordance to the spearmint API changes that we proposed.
 
 # How to Contribute to this Project
 
