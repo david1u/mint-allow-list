@@ -58,7 +58,7 @@ There are a few different commands.
 
 
 # Demo  
-![Allowlist Demo](https://drive.google.com/file/d/1dA87dlv29rvYgB3CjBdmlt3KJEtlAgJj/view)  
+[Allowlist Demo](https://drive.google.com/file/d/1dA87dlv29rvYgB3CjBdmlt3KJEtlAgJj/view)  
 
 
 # Whats Next  
