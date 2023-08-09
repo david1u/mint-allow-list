@@ -56,7 +56,10 @@ There are a few different commands.
 
 ![arhachite guadmar](https://github.com/david1u/mint-allow-list/assets/129913826/c61bc504-7d2e-4676-9b30-5290ff0418cb)
 
-TBA
+
+# Demo  
+![Allowlist Demo](https://drive.google.com/file/d/1dA87dlv29rvYgB3CjBdmlt3KJEtlAgJj/view)  
+
 
 # Whats Next  
 
