@@ -70,4 +70,3 @@ There are a few different commands.
 
 # How to Contribute to this Project
 
-Don't
